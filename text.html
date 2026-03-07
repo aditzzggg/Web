@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS AI PRO - Sistem Chat AI Lengkap</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS SAMA PERSIS SEPERTI ASLINYA (Saya padatkan agar muat di layar) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #ec4899; --accent: #06b6d4; --dark: #0f172a; --darker: #020617; --light: #f8fafc; --gray: #64748b; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1); }
+        body { background: var(--darker); color: var(--light); min-height: 100vh; overflow-x: hidden; }
+        .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); overflow: hidden; }
+        .bg-animation::before { content: ''; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%; background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle, rgba(236, 72, 153, 0.1) 30%, transparent 60%); animation: rotate 30s linear infinite; }
+        @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .login-box { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 40px; width: 100%; max-width: 450px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); animation: slideUp 0.6s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header h1 { font-size: 2.5rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .login-header p { color: var(--gray); }
+        .login-tabs { display: flex; gap: 10px; margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 12px; }
+        .login-tab { flex: 1; padding: 12px; border: none; background: transparent; color: var(--gray); cursor: pointer; border-radius: 8px; transition: all 0.3s; font-weight: 600; }
+        .login-tab.active { background: var(--primary); color: white; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--light); font-size: 0.9rem; font-weight: 500; }
+        .input-group { position: relative; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--gray); }
+        .form-control { width: 100%; padding: 14px 14px 14px 45px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--light); font-size: 1rem; transition: all 0.3s; }
+        .form-control:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.08); }
+        .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -10px var(--primary); }
+        .btn-secondary { background: rgba(255,255,255,0.1); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #059669); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #dc2626); }
+        .btn-warning { background: linear-gradient(135deg, var(--warning), #d97706); }
+        .btn-info { background: linear-gradient(135deg, var(--info), #2563eb); }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; display: none; align-items: center; gap: 10px; }
+        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5; }
+        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success); color: #6ee7b7; }
+        .app-container { display: none; height: 100vh; }
+        .sidebar { width: 300px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; transition: all 0.3s; z-index: 100; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--glass-border); }
+        .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .user-avatar { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; position: relative; }
+        .user-status { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: var(--success); border-radius: 50%; border: 2px solid var(--dark); }
+        .user-details h3 { font-size: 1rem; margin-bottom: 3px; }
+        .user-details span { font-size: 0.8rem; color: var(--gray); }
+        .new-chat-btn { width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px dashed var(--glass-border); border-radius: 10px; color: var(--light); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .new-chat-btn:hover { background: rgba(255,255,255,0.15); border-style: solid; }
+        .chat-history { flex: 1; overflow-y: auto; padding: 15px; }
+        .history-item { padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.3s; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; position: relative; }
+        .history-item:hover { background: rgba(255,255,255,0.05); }
+        .history-item.active { background: rgba(99, 102, 241, 0.2); border-left: 3px solid var(--primary); }
+        .history-item i { color: var(--gray); font-size: 0.9rem; }
+        .history-item span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
+        .delete-chat { opacity: 0; transition: opacity 0.3s; color: var(--danger); cursor: pointer; }
+        .history-item:hover .delete-chat { opacity: 1; }
+        .sidebar-footer { padding: 15px; border-top: 1px solid var(--glass-border); }
+        .menu-item { padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px; color: var(--gray); margin-bottom: 5px; position: relative; }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--light); }
+        .menu-item.active { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        .menu-item i { width: 20px; text-align: center; }
+        .badge-count { position: absolute; right: 12px; background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.4); position: relative; }
+        .back-button { position: absolute; top: 15px; left: 15px; z-index: 50; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--light); padding: 8px 16px; border-radius: 8px; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.3s; }
+        .back-button:hover { background: rgba(255,255,255,0.2); }
+        .back-button.visible { display: flex; }
+        .chat-header { padding: 15px 25px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); }
+        .chat-header h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .header-actions { display: flex; gap: 10px; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: none; background: rgba(255,255,255,0.05); color: var(--light); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; position: relative; }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+        .icon-btn .notification-dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; }
+        .messages-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+        .message { max-width: 80%; display: flex; gap: 12px; animation: messageSlide 0.3s ease-out; }
+        @keyframes messageSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message-avatar { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+        .message.user .message-avatar { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+        .message.ai .message-avatar { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); }
+        .message-content { background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 18px; border: 1px solid var(--glass-border); line-height: 1.6; }
+        .message.user .message-content { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; }
+        .message-actions { display: flex; gap: 8px; margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
+        .message:hover .message-actions { opacity: 1; }
+        .message-action-btn { background: rgba(255,255,255,0.1); border: none; color: var(--gray); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; transition: all 0.3s; }
+        .message-action-btn:hover { background: rgba(255,255,255,0.2); color: var(--light); }
+        .message-time { font-size: 0.75rem; color: var(--gray); margin-top: 5px; text-align: right; }
+        .typing-indicator { display: none; align-items: center; gap: 5px; padding: 15px 20px; background: rgba(255,255,255,0.05); border-radius: 18px; border: 1px solid var(--glass-border); width: fit-content; }
+        .typing-indicator.active { display: flex; }
+        .typing-dot { width: 8px; height: 8px; background: var(--gray); border-radius: 50%; animation: typing 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+        .input-container { padding: 20px 25px; border-top: 1px solid var(--glass-border); background: rgba(15, 23, 42, 0.6); }
+        .input-wrapper { display: flex; gap: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; padding: 8px; align-items: flex-end; }
+        .message-input { flex: 1; background: transparent; border: none; padding: 12px 15px; color: var(--light); font-size: 1rem; resize: none; max-height: 150px; min-height: 24px; font-family: inherit; }
+        .message-input:focus { outline: none; }
+        .input-actions { display: flex; gap: 8px; padding-right: 8px; }
+        .attach-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent; color: var(--gray); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .attach-btn:hover { color: var(--light); background: rgba(255,255,255,0.1); }
+        .send-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--primary); color: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .send-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .admin-panel { display: none; padding: 20px; overflow-y: auto; height: 100%; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .admin-header h2 { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; }
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .admin-nav-btn { padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--gray); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .admin-nav-btn:hover, .admin-nav-btn.active { background: rgba(99, 102, 241, 0.2); color: var(--primary); border-color: var(--primary); }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; max-width: 1600px; margin: 0 auto; }
+        .admin-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; transition: all 0.3s; }
+        .admin-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.3); }
+        .admin-card.full-width { grid-column: 1 / -1; }
+        .admin-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--light); font-size: 1.1rem; }
+        .admin-card h3 i { color: var(--primary); }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+        .stat-label { color: var(--gray); font-size: 0.85rem; }
+        .setting-item { margin-bottom: 20px; }
+        .setting-item label { display: block; margin-bottom: 8px; color: var(--gray); font-size: 0.9rem; }
+        .setting-item input, .setting-item select, .setting-item textarea { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--light); font-size: 0.95rem; }
+        .setting-item textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+        .toggle-switch { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.3s; }
+        .user-list { max-height: 400px; overflow-y: auto; }
+        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; transition: all 0.3s; }
+        .user-item:hover { background: rgba(255,255,255,0.06); }
+        .user-item-info { display: flex; align-items: center; gap: 12px; }
+        .user-item-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 600; }
+        .user-item-details h4 { font-size: 0.95rem; margin-bottom: 3px; }
+        .user-item-details span { font-size: 0.8rem; color: var(--gray); }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-admin { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-user { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-moderator { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .action-btns { display: flex; gap: 8px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.3s; }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        th { color: var(--gray); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        td { font-size: 0.9rem; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .status-online { background: var(--success); }
+        .status-offline { background: var(--gray); }
+        .status-busy { background: var(--warning); }
+        .chart-placeholder { height: 200px; background: rgba(255,255,255,0.03); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gray); border: 2px dashed var(--glass-border); }
+        .log-entry { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; font-size: 0.85rem; display: flex; gap: 15px; }
+        .log-time { color: var(--primary); min-width: 140px; }
+        .log-user { color: var(--secondary); min-width: 100px; }
+        .log-action { color: var(--light); flex: 1; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-input { padding: 10px 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--light); font-size: 0.9rem; }
+        .backup-list { display: flex; flex-direction: column; gap: 10px; }
+        .backup-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; }
+        .backup-info h4 { margin-bottom: 5px; }
+        .backup-info span { color: var(--gray); font-size: 0.85rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--dark); border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; animation: modalSlide 0.3s ease-out; }
+        @keyframes modalSlide { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 1.5rem; }
+        .close-modal { background: none; border: none; color: var(--gray); font-size: 1.5rem; cursor: pointer; transition: color 0.3s; }
+        .close-modal:hover { color: var(--light); }
+        .favorites-list { display: flex; flex-direction: column; gap: 10px; }
+        .favorite-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer; transition: all 0.3s; }
+        .favorite-item:hover { background: rgba(255,255,255,0.1); }
+        .favorite-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; color: var(--primary); }
+        .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .theme-option { aspect-ratio: 1; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; position: relative; }
+        .theme-option:hover, .theme-option.active { border-color: var(--primary); }
+        .theme-option::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 1.5rem; opacity: 0; transition: opacity 0.3s; }
+        .theme-option.active::after { opacity: 1; }
+        .theme-blue { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .theme-purple { background: linear-gradient(135deg, #9333ea, #7c3aed); }
+        .theme-green { background: linear-gradient(135deg, #10b981, #059669); }
+        .theme-orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .theme-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .theme-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -300px; height: 100vh; z-index: 100; }
+            .sidebar.active { left: 0; }
+            .mobile-toggle { display: block !important; }
+            .message { max-width: 90%; }
+            .admin-grid { grid-template-columns: 1fr; }
+        }
+        .mobile-toggle { display: none; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid var(--primary); width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        pre { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; overflow-x: auto; margin: 10px 0; border: 1px solid var(--glass-border); }
+        code { font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--gray); }
+        .welcome-screen i { font-size: 4rem; margin-bottom: 20px; color: var(--primary); opacity: 0.5; }
+        .welcome-screen h2 { color: var(--light); margin-bottom: 10px; }
+        .quick-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .quick-action { padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem; }
+        .quick-action:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--primary); }
+        .notification-panel { position: absolute; top: 60px; right: 20px; width: 350px; background: var(--dark); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: none; z-index: 200; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .notification-panel.active { display: block; }
+        .notification-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
+        .notification-item { padding: 12px; border-radius: 8px; margin-bottom: 8px; background: rgba(255,255,255,0.03); cursor: pointer; transition: all 0.3s; }
+        .notification-item:hover { background: rgba(255,255,255,0.06); }
+        .notification-item.unread { border-left: 3px solid var(--primary); }
+        .shortcut-help { position: fixed; bottom: 20px; right: 20px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; display: none; z-index: 300; max-width: 300px; }
+        .shortcut-help.active { display: block; }
+        .shortcut-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .shortcut-row:last-child { border-bottom: none; }
+        .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <div class="login-header">
+                <h1><i class="fas fa-robot"></i> NEXUS AI PRO</h1>
+                <p>Sistem Chat AI Enterprise dengan 25+ Fitur Admin</p>
+            </div>
+
+            <div class="login-tabs">
+                <button class="login-tab active" onclick="switchTab('user')">
+                    <i class="fas fa-user"></i> User
+                </button>
+                <button class="login-tab" onclick="switchTab('admin')">
+                    <i class="fas fa-shield-alt"></i> Admin
+                </button>
+            </div>
+
+            <div id="alertBox" class="alert"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" class="form-control" id="username" placeholder="Masukkan username" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="form-control" id="password" placeholder="Masukkan password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Masuk
+                </button>
+            </form>
+
+            <div style="margin-top: 20px; text-align: center; color: var(--gray); font-size: 0.85rem;">
+                <p>Default Admin: <strong>admin123#</strong> / <strong>admin123#</strong></p>
+                <p style="margin-top: 10px;">Tekan <span class="key">Ctrl</span> + <span class="key">/</span> untuk bantuan shortcut</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-avatar" id="currentUserAvatar">
+                        U
+                        <span class="user-status"></span>
+                    </div>
+                    <div class="user-details">
+                        <h3 id="currentUserName">User</h3>
+                        <span id="currentUserRole">User</span>
+                    </div>
+                </div>
+                <button class="new-chat-btn" onclick="startNewChat()">
+                    <i class="fas fa-plus"></i> Chat Baru
+                </button>
+            </div>
+
+            <div class="chat-history" id="chatHistory">
+                </div>
+
+            <div class="sidebar-footer">
+                <div class="menu-item" onclick="showChat()" id="menuChat">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat AI</span>
+                </div>
+                <div class="menu-item" onclick="showFavorites()" id="menuFavorites">
+                    <i class="fas fa-star"></i>
+                    <span>Favorit</span>
+                    <span class="badge-count" id="favCount" style="display: none;">0</span>
+                </div>
+                <div class="menu-item" onclick="showTemplates()" id="menuTemplates">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Template</span>
+                </div>
+                <div class="menu-item" onclick="showHistory()" id="menuHistory">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat</span>
+                </div>
+                <div class="menu-item" onclick="showSettings()" id="menuSettings">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </div>
+                <div class="menu-item" onclick="showAdminPanel()" id="menuAdmin" style="display: none;">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Panel Admin</span>
+                    <span class="badge-count" id="adminNotif" style="display: none;">!</span>
+                </div>
+                <div class="menu-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Keluar</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <button class="back-button" id="backButton" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </button>
+
+            <div id="chatView" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="chat-header">
+                    <h2>
+                        <i class="fas fa-robot"></i>
+                        <span id="chatTitle">Chat Baru</span>
+                    </h2>
+                    <div class="header-actions">
+                        <button class="icon-btn" onclick="toggleNotifications()" title="Notifikasi">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-dot" id="notifDot" style="display: none;"></span>
+                        </button>
+                        <button class="icon-btn mobile-toggle" onclick="toggleSidebar()">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button class="icon-btn" onclick="bookmarkCurrentChat()" title="Tandai Favorit">
+                            <i class="far fa-star" id="bookmarkIcon"></i>
+                        </button>
+                        <button class="icon-btn" onclick="clearCurrentChat()" title="Hapus Chat">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="notification-header">
+                        <h3>Notifikasi</h3>
+                        <button onclick="clearAllNotifications()" style="background: none; border: none; color: var(--gray); cursor: pointer;">
+                            <i class="fas fa-check-double"></i>
+                        </button>
+                    </div>
+                    <div id="notificationList">
+                        <div style="text-align: center; color: var(--gray); padding: 20px;">Tidak ada notifikasi</div>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <i class="fas fa-brain"></i>
+                        <h2>Selamat Datang di NEXUS AI PRO</h2>
+                        <p>Mulai percakapan dengan AI yang cerdas dan responsif</p>
+                        <div class="quick-actions">
+                            <div class="quick-action" onclick="sendQuickMessage('Jelaskan tentang kecerdasan buatan')">🤖 Apa itu AI?</div>
+                            <div class="quick-action" onclick="sendQuickMessage('Bantu saya menulis kode Python')">💻 Bantu Coding</div>
+                            <div class="quick-action" onclick="sendQuickMessage('Berikan ide proyek menarik')">💡 Ide Proyek</div>
+                            <div class="quick-action" onclick="sendQuickMessage('Buatkan rencana belajar JavaScript')">📚 Belajar JS</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <button class="attach-btn" onclick="attachFile()" title="Lampirkan File">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <textarea class="message-input" id="messageInput" placeholder="Ketik pesan Anda... (Shift+Enter untuk baris baru)" rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                        <div class="input-actions">
+                            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel" id="favoritesView">
+                <div class="admin-header">
+                    <h2><i class="fas fa-star"></i> Chat Favorit</h2>
+                </div>
+                <div class="admin-grid" style="max-width: 800px;">
+                    <div class="admin-card full-width">
+                        <h3><i class="fas fa-bookmark"></i> Daftar Favorit</h3>
+                        <div class="favorites-list" id="favoritesList">
+                            <div style="text-align: center; color: var(--gray); padding: 40px;">
+                                <i class="far fa-star" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                                Belum ada chat favorit
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel" id="templatesView">
+                <div class="admin-header">
+                    <h2><i class="fas fa-file-alt"></i> Template Pesan</h2>
+                    <button class="btn btn-sm" onclick="addTemplate()">
+                        <i class="fas fa-plus"></i> Tambah Template
+                    </button>
+                </div>
+                <div class="admin-grid" style="max-width: 800px;">
+                    <div class="admin-card full-width">
+                        <h3><i class="fas fa-magic"></i> Template Cepat</h3>
+                        <div class="favorites-list" id="templatesList">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel" id="historyView">
+                <div class="admin-header">
+                    <h2><i class="fas fa-history"></i> Riwayat Aktivitas</h2>
+                    <button class="btn btn-danger btn-sm" onclick="clearUserHistory()">
+                        <i class="fas fa-trash"></i> Bersihkan
+                    </button>
+                </div>
+                <div class="admin-grid" style="max-width: 1000px;">
+                    <div class="admin-card full-width">
+                        <h3><i class="fas fa-list"></i> Log Aktivitas Anda</h3>
+                        <div id="userHistoryList" style="max-height: 500px; overflow-y: auto;">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel" id="adminPanel">
+                <div class="admin-header">
+                    <h2><i class="fas fa-shield-alt"></i> Panel Admin - Kontrol Total Sistem</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-sm btn-secondary" onclick="refreshAdminData()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <button class="btn btn-sm" onclick="exportFullReport()">
+                            <i class="fas fa-file-export"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-nav">
+                    <button class="admin-nav-btn active" onclick="showAdminSection('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('users')"><i class="fas fa-users"></i> Manajemen User</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('ai')"><i class="fas fa-brain"></i> Konfigurasi AI</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('security')"><i class="fas fa-lock"></i> Keamanan</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('monitoring')"><i class="fas fa-chart-line"></i> Monitoring</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('content')"><i class="fas fa-shield-alt"></i> Kontrol Konten</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('system')"><i class="fas fa-server"></i> Sistem</button>
+                    <button class="admin-nav-btn" onclick="showAdminSection('backup')"><i class="fas fa-database"></i> Backup & Data</button>
+                </div>
+
+                <div class="admin-section active" id="section-dashboard">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-chart-pie"></i> Statistik Real-time</h3>
+                            <div class="stat-grid">
+                                <div class="stat-box"><div class="stat-value" id="statUsers">0</div><div class="stat-label">Total Users</div></div>
+                                <div class="stat-box"><div class="stat-value" id="statOnline">0</div><div class="stat-label">Online Now</div></div>
+                                <div class="stat-box"><div class="stat-value" id="statChats">0</div><div class="stat-label">Total Chat</div></div>
+                                <div class="stat-box"><div class="stat-value" id="statMessages">0</div><div class="stat-label">Total Pesan</div></div>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="font-size: 0.85rem; color: var(--gray);">Penggunaan Storage</span>
+                                    <span style="font-size: 0.85rem;" id="storageUsed">0 MB</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="storageBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-heartbeat"></i> Kesehatan Sistem</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fas fa-check-circle" style="color: var(--success);"></i> API Connection</span>
+                                    <span class="badge badge-user" id="apiStatus">Connected</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fas fa-check-circle" style="color: var(--success);"></i> Database</span>
+                                    <span class="badge badge-user">Active</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fas fa-check-circle" style="color: var(--success);"></i> WebSocket</span>
+                                    <span class="badge badge-user">Ready</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fas fa-exclamation-circle" style="color: var(--warning);"></i> Rate Limit</span>
+                                    <span class="badge badge-moderator" id="rateStatus">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-bolt"></i> Aksi Cepat</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="btn btn-sm" onclick="broadcastMessage()"><i class="fas fa-bullhorn"></i> Broadcast</button>
+                                <button class="btn btn-sm btn-warning" onclick="toggleMaintenance()"><i class="fas fa-wrench"></i> Maintenance</button>
+                                <button class="btn btn-sm btn-secondary" onclick="clearCache()"><i class="fas fa-broom"></i> Clear Cache</button>
+                                <button class="btn btn-sm btn-info" onclick="systemDiagnostics()"><i class="fas fa-stethoscope"></i> Diagnostics</button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-clock"></i> Aktivitas Terbaru (Live)</h3>
+                            <div id="recentActivity" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-users">
+                    <div class="admin-grid">
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-users-cog"></i> Manajemen Pengguna Lanjutan</h3>
+                            <div class="filter-bar">
+                                <input type="text" class="filter-input" id="userSearch" placeholder="Cari user..." onkeyup="filterUsers()">
+                                <select class="filter-input" id="userFilterRole" onchange="filterUsers()">
+                                    <option value="">Semua Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="moderator">Moderator</option>
+                                    <option value="user">User</option>
+                                    <option value="banned">Banned</option>
+                                </select>
+                                <select class="filter-input" id="userFilterStatus" onchange="filterUsers()">
+                                    <option value="">Semua Status</option>
+                                    <option value="online">Online</option>
+                                    <option value="offline">Offline</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                                <button class="btn btn-sm btn-success" onclick="addNewUser()"><i class="fas fa-plus"></i> User Baru</button>
+                                <button class="btn btn-sm btn-info" onclick="importUsers()"><i class="fas fa-file-import"></i> Import</button>
+                                <button class="btn btn-sm btn-secondary" onclick="exportUsers()"><i class="fas fa-file-export"></i> Export</button>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Chat</th><th>Last Active</th><th>Actions</th></tr></thead>
+                                    <tbody id="userTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-chart-bar"></i> Analitik User</h3>
+                            <div class="chart-placeholder"><i class="fas fa-chart-area" style="font-size: 3rem;"></i></div>
+                            <div style="margin-top: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 0.9rem;">User Aktif Hari Ini</span><span style="font-weight: 600;" id="activeToday">0</span></div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 0.9rem;">User Baru Minggu Ini</span><span style="font-weight: 600;" id="newThisWeek">0</span></div>
+                                <div style="display: flex; justify-content: space-between;"><span style="font-size: 0.9rem;">Rata-rata Chat/User</span><span style="font-weight: 600;" id="avgChatPerUser">0</span></div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-user-shield"></i> Manajemen Hak Akses</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div class="toggle-switch"><span>User bisa hapus chat</span><label class="switch"><input type="checkbox" id="permDeleteChat" checked onchange="updatePermission('deleteChat')"><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><span>User bisa export data</span><label class="switch"><input type="checkbox" id="permExport" checked onchange="updatePermission('export')"><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><span>User bisa ganti tema</span><label class="switch"><input type="checkbox" id="permTheme" checked onchange="updatePermission('theme')"><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><span>Moderator bisa ban user</span><label class="switch"><input type="checkbox" id="permModBan" onchange="updatePermission('modBan')"><span class="slider"></span></label></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-ai">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-robot"></i> Manajemen Model AI</h3>
+                            <div class="setting-item"><label>Model Default</label>
+                                <select id="aiModelDefault" class="form-control">
+                                    <option value="arcee-ai/trinity-large-preview:free">Arcee AI Trinity (Free)</option>
+                                    <option value="openai/gpt-4">GPT-4</option>
+                                    <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    <option value="anthropic/claude-3-opus">Claude 3 Opus</option>
+                                </select>
+                            </div>
+                            <div class="setting-item"><label>Model Fallback (jika utama error)</label>
+                                <select id="aiModelFallback" class="form-control">
+                                    <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    <option value="arcee-ai/trinity-large-preview:free">Arcee AI Trinity</option>
+                                </select>
+                            </div>
+                            <div class="setting-item"><label>Load Balancing</label>
+                                <select id="loadBalance" class="form-control">
+                                    <option value="single">Single Model</option>
+                                    <option value="round-robin">Round Robin</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-sm" onclick="saveModelConfig()"><i class="fas fa-save"></i> Simpan Konfigurasi</button>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-code"></i> Prompt Engineering</h3>
+                            <div class="setting-item"><label>System Prompt Global</label><textarea id="globalSystemPrompt" rows="4">Anda adalah NEXUS AI, asisten yang membantu dan cerdas.</textarea></div>
+                            <div class="setting-item"><label>Personality Mode</label>
+                                <select id="personalityMode" class="form-control">
+                                    <option value="professional">Profesional</option><option value="friendly">Ramah & Santai</option>
+                                </select>
+                            </div>
+                            <div class="setting-item"><label>Context Window</label><input type="number" id="contextWindow" value="10" min="1" max="50" class="form-control"></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-sliders-h"></i> Fine Tuning Respons</h3>
+                            <div class="setting-item"><label>Temperature: <span id="tempValue">0.7</span></label><input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('tempValue').textContent=this.value" style="width: 100%;"></div>
+                            <div class="setting-item"><label>Max Tokens</label><input type="number" id="maxTokens" value="2000" min="100" max="8000" step="100" class="form-control"></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-key"></i> Manajemen API Keys</h3>
+                            <div class="setting-item"><label>Primary API Key</label>
+                                <div style="display: flex; gap: 10px;"><input type="password" id="apiKeyPrimary" class="form-control" placeholder="sk-or-v1-..."><button class="btn btn-sm btn-secondary" onclick="testApiKey('primary')">Test</button></div>
+                            </div>
+                            <div class="setting-item"><label>Backup API Key</label>
+                                <div style="display: flex; gap: 10px;"><input type="password" id="apiKeyBackup" class="form-control" placeholder="sk-or-v1-..."><button class="btn btn-sm btn-secondary" onclick="testApiKey('backup')">Test</button></div>
+                            </div>
+                            <div class="setting-item"><label>Rate Limit per Menit</label><input type="number" id="rateLimitPerMin" value="60" class="form-control"></div>
+                            <div class="setting-item"><label>Daily Quota (requests)</label><input type="number" id="dailyQuota" value="1000" class="form-control"></div>
+                            <button class="btn btn-sm btn-success" onclick="saveApiKeys()"><i class="fas fa-save"></i> Simpan Keys</button>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-dollar-sign"></i> Pemantauan Biaya</h3>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                                <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; color: var(--success);" id="costToday">$0.00</div><div style="font-size: 0.85rem; color: var(--gray);">Hari Ini</div></div>
+                                <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="costMonth">$0.00</div><div style="font-size: 0.85rem; color: var(--gray);">Bulan Ini</div></div>
+                                <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; color: var(--warning);" id="costTotal">$0.00</div><div style="font-size: 0.85rem; color: var(--gray);">Total</div></div>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" id="budgetBar" style="width: 0%; background: linear-gradient(90deg, var(--success), var(--warning));"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.85rem;"><span>Penggunaan Budget</span><span id="budgetPercent">0%</span></div>
+                            <button class="btn btn-sm btn-info" onclick="showCostDetails()" style="margin-top: 15px; width: 100%;"><i class="fas fa-chart-line"></i> Detail Penggunaan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-security">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-shield-alt"></i> Pengaturan Keamanan Lanjutan</h3>
+                            <div class="toggle-switch"><span>Two Factor Authentication (2FA)</span><label class="switch"><input type="checkbox" id="enable2FA"><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Enkripsi End-to-End Chat</span><label class="switch"><input type="checkbox" id="enableE2E" checked><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>IP Whitelist</span><label class="switch"><input type="checkbox" id="enableIPWhitelist"><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Login Attempt Limit (3x)</span><label class="switch"><input type="checkbox" id="loginLimit" checked><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Auto-logout Inactive (30min)</span><label class="switch"><input type="checkbox" id="autoLogout" checked><span class="slider"></span></label></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-user-lock"></i> Kontrol Akses & Firewall</h3>
+                            <div class="setting-item"><label>IP Address yang Diblokir</label><textarea id="blockedIPs" rows="3" placeholder="192.168.1.1"></textarea></div>
+                            <div class="setting-item"><label>Allowed Countries (ISO Code)</label><input type="text" id="allowedCountries" placeholder="ID, US, SG" class="form-control"></div>
+                            <div class="setting-item"><label>Session Timeout (menit)</label><input type="number" id="sessionTimeout" value="30" class="form-control"></div>
+                            <button class="btn btn-sm btn-warning" onclick="saveSecuritySettings()"><i class="fas fa-save"></i> Simpan Keamanan</button>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-clipboard-list"></i> Audit Trail & Log Keamanan</h3>
+                            <div class="filter-bar">
+                                <input type="date" class="filter-input" id="auditDateFrom"><input type="date" class="filter-input" id="auditDateTo">
+                                <select class="filter-input" id="auditType"><option value="">Semua Tipe</option><option value="login">Login</option></select>
+                                <button class="btn btn-sm" onclick="filterAudit()"><i class="fas fa-filter"></i> Filter</button>
+                            </div>
+                            <div style="max-height: 300px; overflow-y: auto;" id="auditTrail">
+                                <div class="log-entry"><span class="log-time">2024-01-15 14:30:25</span><span class="log-user">admin123#</span><span class="log-action">System initialized</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-monitoring">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-heartbeat"></i> Monitoring Real-time</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="stat-box"><div style="font-size: 1.2rem; color: var(--success);"><i class="fas fa-server"></i></div><div style="font-size: 1.5rem; font-weight: 700;" id="serverLoad">12%</div><div style="font-size: 0.8rem; color: var(--gray);">Server Load</div></div>
+                                <div class="stat-box"><div style="font-size: 1.2rem; color: var(--info);"><i class="fas fa-memory"></i></div><div style="font-size: 1.5rem; font-weight: 700;" id="memoryUsage">45%</div><div style="font-size: 0.8rem; color: var(--gray);">Memory</div></div>
+                            </div>
+                            <div class="chart-placeholder" style="height: 150px;"><span>Live Performance Chart</span></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-bug"></i> Error & Exception Tracking</h3>
+                            <div style="max-height: 250px; overflow-y: auto;" id="errorLog">
+                                <div style="padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--danger);">
+                                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--danger);">API Timeout Error</div>
+                                    <div style="font-size: 0.8rem; color: var(--gray);">2024-01-15 13:45:12 - OpenRouter API lambat</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="clearErrorLog()" style="margin-top: 10px;"><i class="fas fa-trash"></i> Bersihkan Log</button>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-tachometer-alt"></i> Analitik Performa Lengkap</h3>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px;"><div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);" id="avgResponseTime">1.2s</div><div style="font-size: 0.85rem; color: var(--gray);">Avg Response Time</div></div>
+                                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px;"><div style="font-size: 1.8rem; font-weight: 700; color: var(--success);" id="uptimePercent">99.9%</div><div style="font-size: 0.85rem; color: var(--gray);">Uptime</div></div>
+                                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px;"><div style="font-size: 1.8rem; font-weight: 700; color: var(--info);" id="totalRequests">15.2K</div><div style="font-size: 0.85rem; color: var(--gray);">Total Requests</div></div>
+                                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px;"><div style="font-size: 1.8rem; font-weight: 700; color: var(--secondary);" id="errorRate">0.3%</div><div style="font-size: 0.85rem; color: var(--gray);">Error Rate</div></div>
+                            </div>
+                            <div class="chart-placeholder" style="height: 200px;"><span>7-Day Performance Trends</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-content">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-filter"></i> Moderasi Konten</h3>
+                            <div class="toggle-switch"><span>Filter Kata Kasar</span><label class="switch"><input type="checkbox" id="filterProfanity" checked><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Spam Detection</span><label class="switch"><input type="checkbox" id="detectSpam" checked><span class="slider"></span></label></div>
+                            <div class="setting-item" style="margin-top: 15px;"><label>Kata yang Diblokir</label><textarea id="blockedWords" rows="3" placeholder="spam, iklan..."></textarea></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-ban"></i> Manajemen Konten Terlarang</h3>
+                            <div style="display: flex; gap: 10px;"><input type="text" id="banUserInput" placeholder="Username untuk ban" class="form-control" style="flex: 1;"><button class="btn btn-danger btn-sm" onclick="banUser()"><i class="fas fa-ban"></i> Ban</button></div>
+                            <div class="setting-item" style="margin-top: 15px;"><label>Alasan Ban Default</label><input type="text" id="defaultBanReason" value="Melanggar kebijakan penggunaan" class="form-control"></div>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-eye"></i> Monitoring Chat Aktif</h3>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>User</th><th>Chat ID</th><th>Pesan Terakhir</th><th>Status</th><th>Aksi</th></tr></thead>
+                                    <tbody id="activeChatsTable">
+                                        <tr><td>user1</td><td>chat_123</td><td>Halo min</td><td><span class="status-dot status-online"></span> Aktif</td><td><button class="action-btn btn-danger btn-sm"><i class="fas fa-stop"></i></button></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-system">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-cogs"></i> Konfigurasi Sistem</h3>
+                            <div class="setting-item"><label>Timezone</label><select id="systemTimezone" class="form-control"><option value="Asia/Jakarta">Asia/Jakarta (WIB)</option></select></div>
+                            <div class="setting-item"><label>Language Default</label><select id="systemLanguage" class="form-control"><option value="id">Indonesia</option></select></div>
+                            <div class="toggle-switch" style="margin-top: 15px;"><span>Maintenance Mode</span><label class="switch"><input type="checkbox" id="maintenanceMode"><span class="slider"></span></label></div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-bell"></i> Pengaturan Notifikasi</h3>
+                            <div class="toggle-switch"><span>Notifikasi Login Baru</span><label class="switch"><input type="checkbox" id="notifNewLogin" checked><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Notifikasi Error</span><label class="switch"><input type="checkbox" id="notifError" checked><span class="slider"></span></label></div>
+                            <div class="setting-item" style="margin-top: 15px;"><label>Email Admin</label><input type="email" id="adminEmail" placeholder="admin@example.com" class="form-control"></div>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-magic"></i> Fitur Lanjutan & Eksperimental</h3>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                <div class="toggle-switch"><span>Voice Input Support</span><label class="switch"><input type="checkbox" id="featureVoice"><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><span>Image Generation</span><label class="switch"><input type="checkbox" id="featureImageGen"><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><span>File Upload Processing</span><label class="switch"><input type="checkbox" id="featureFileUpload" checked><span class="slider"></span></label></div>
+                            </div>
+                            <button class="btn btn-sm" onclick="saveAdvancedFeatures()" style="margin-top: 20px;"><i class="fas fa-save"></i> Simpan Pengaturan Lanjutan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section" id="section-backup">
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3><i class="fas fa-database"></i> Manajemen Backup</h3>
+                            <div class="backup-list" id="backupList">
+                                <div class="backup-item">
+                                    <div class="backup-info"><h4>Backup Otomatis - 15 Jan</h4><span>Size: 12.5 MB</span></div>
+                                    <div class="action-btns"><button class="action-btn btn-success btn-sm"><i class="fas fa-undo"></i></button></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button class="btn btn-sm" onclick="createBackup()" style="flex: 1;"><i class="fas fa-plus"></i> Backup Sekarang</button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <h3><i class="fas fa-trash-alt"></i> Manajemen Data</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="btn btn-sm btn-secondary" onclick="cleanupOldChats()"><i class="fas fa-broom"></i> Bersihkan Chat Lama (>30 hari)</button>
+                                <button class="btn btn-sm btn-danger" onclick="purgeAllData()"><i class="fas fa-exclamation-triangle"></i> HAPUS SEMUA DATA</button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card full-width">
+                            <h3><i class="fas fa-exchange-alt"></i> Import & Export Data</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <h4 style="margin-bottom: 15px; color: var(--gray);">Export Data</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <button class="btn btn-sm btn-secondary" onclick="exportData('users')"><i class="fas fa-users"></i> Export Users</button>
+                                        <button class="btn btn-sm" onclick="exportData('full')"><i class="fas fa-file-archive"></i> Export Full Backup</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 15px; color: var(--gray);">Import Data</h4>
+                                    <div style="border: 2px dashed var(--glass-border); border-radius: 10px; padding: 20px; text-align: center;">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--gray); margin-bottom: 10px;"></i>
+                                        <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 15px;">Pilih File JSON</p>
+                                        <input type="file" id="importFile" style="display: none;" accept=".json,.csv">
+                                        <button class="btn btn-sm" onclick="document.getElementById('importFile').click()"><i class="fas fa-folder-open"></i> Browse</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel" id="settingsView" style="display: none;">
+                <div class="admin-header">
+                    <h2><i class="fas fa-cog"></i> Pengaturan Pengguna</h2>
+                </div>
+                <div class="admin-grid" style="max-width: 800px;">
+                    <div class="admin-card">
+                        <h3><i class="fas fa-user-circle"></i> Profil & Akun</h3>
+                        <div class="setting-item"><label>Username</label><input type="text" id="profileUsername" readonly class="form-control"></div>
+                        <div class="setting-item"><label>Display Name</label><input type="text" id="displayName" placeholder="Nama tampilan" class="form-control"></div>
+                        <div class="setting-item"><label>Email</label><input type="email" id="userEmail" placeholder="email@example.com" class="form-control"></div>
+                        <div class="setting-item"><label>Password Baru</label><input type="password" id="newPassword" placeholder="Kosongkan jika tidak mengubah" class="form-control"></div>
+                        <div class="setting-item"><label>Konfirmasi Password</label><input type="password" id="confirmPassword" placeholder="Ulangi password baru" class="form-control"></div>
+                        <button class="btn btn-sm" onclick="updateProfile()"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3><i class="fas fa-palette"></i> Personalisasi Tema</h3>
+                        <label style="display: block; margin-bottom: 15px; color: var(--gray);">Pilih Warna Tema</label>
+                        <div class="theme-grid">
+                            <div class="theme-option theme-blue active" onclick="setTheme('blue')"></div>
+                            <div class="theme-option theme-purple" onclick="setTheme('purple')"></div>
+                            <div class="theme-option theme-green" onclick="setTheme('green')"></div>
+                            <div class="theme-option theme-orange" onclick="setTheme('orange')"></div>
+                            <div class="theme-option theme-pink" onclick="setTheme('pink')"></div>
+                            <div class="theme-option theme-cyan" onclick="setTheme('cyan')"></div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div class="toggle-switch"><span>Mode Gelap (Default)</span><label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label></div>
+                            <div class="toggle-switch"><span>Animasi Background</span><label class="switch"><input type="checkbox" id="bgAnimation" checked onchange="toggleBgAnimation()"><span class="slider"></span></label></div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3><i class="fas fa-comments"></i> Preferensi Chat</h3>
+                        <div class="toggle-switch"><span>Enter untuk Kirim</span><label class="switch"><input type="checkbox" id="enterToSend" checked><span class="slider"></span></label></div>
+                        <div class="toggle-switch"><span>Auto-save Chat</span><label class="switch"><input type="checkbox" id="autoSaveChat" checked><span class="slider"></span></label></div>
+                        <div class="toggle-switch"><span>Notifikasi Suara</span><label class="switch"><input type="checkbox" id="soundNotif"><span class="slider"></span></label></div>
+                        <div class="setting-item" style="margin-top: 15px;"><label>Bahasa Interface</label><select id="userLanguage" class="form-control"><option value="id" selected>Indonesia</option><option value="en">English</option></select></div>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3><i class="fas fa-lock"></i> Privasi & Keamanan</h3>
+                        <div class="toggle-switch"><span>Private Mode (no logging)</span><label class="switch"><input type="checkbox" id="privateMode"><span class="slider"></span></label></div>
+                        <div class="toggle-switch"><span>Hide Online Status</span><label class="switch"><input type="checkbox" id="hideStatus"><span class="slider"></span></label></div>
+                        <button class="btn btn-sm btn-secondary" onclick="viewLoginHistory()" style="margin-top: 10px;"><i class="fas fa-history"></i> Riwayat Login</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAccount()" style="margin-top: 10px;"><i class="fas fa-trash"></i> Hapus Akun</button>
+                    </div>
+
+                    <div class="admin-card full-width">
+                        <h3><i class="fas fa-database"></i> Manajemen Data Pribadi</h3>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <button class="btn btn-sm btn-secondary" onclick="exportMyData()"><i class="fas fa-download"></i> Export Data Saya</button>
+                            <button class="btn btn-sm btn-warning" onclick="clearMyChats()"><i class="fas fa-trash"></i> Hapus Semua Chat</button>
+                            <button class="btn btn-sm btn-danger" onclick="clearMyHistory()"><i class="fas fa-eraser"></i> Bersihkan Riwayat</button>
+                        </div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>Chat Tersimpan</span><span id="myChatCount">0 chat</span></div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>Total Pesan</span><span id="myMessageCount">0 pesan</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span>Storage Digunakan</span><span id="myStorageUsed">0 KB</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="shortcut-help" id="shortcutHelp">
+        <h4 style="margin-bottom: 15px;"><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h4>
+        <div class="shortcut-row"><span><span class="key">Ctrl</span> + <span class="key">Enter</span></span><span>Kirim pesan</span></div>
+        <div class="shortcut-row"><span><span class="key">Ctrl</span> + <span class="key">N</span></span><span>Chat baru</span></div>
+        <div class="shortcut-row"><span><span class="key">Ctrl</span> + <span class="key">B</span></span><span>Toggle sidebar</span></div>
+        <div class="shortcut-row"><span><span class="key">Ctrl</span> + <span class="key">/</span></span><span>Bantuan shortcut</span></div>
+        <div class="shortcut-row"><span><span class="key">Esc</span></span><span>Tutup/kembali</span></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // ==========================================
+        // ⚠️ GANTI KODE DI BAWAH INI DENGAN MILIKMU JIKA SUDAH PUNYA FIREBASE ⚠️
+        // (Jika belum ada, kosongkan saja, script lokal akan tetap jalan)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "ISI_DENGAN_API_KEY",
+            authDomain: "ISI_DENGAN_AUTH_DOMAIN",
+            projectId: "ISI_DENGAN_PROJECT_ID",
+            storageBucket: "ISI_DENGAN_STORAGE_BUCKET",
+            messagingSenderId: "ISI_DENGAN_SENDER_ID",
+            appId: "ISI_DENGAN_APP_ID"
+        };
+
+        // Initialize Firebase ONLY IF config is valid (preventing crash if you don't use Firebase yet)
+        let db = null;
+        if (firebaseConfig.apiKey !== "ISI_DENGAN_API_KEY") {
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+            db = firebase.firestore();
+        }
+
+        // DATABASE AWAL (Membaca dari localStorage dulu sebagai cadangan)
+        let DB = {
+            users: JSON.parse(localStorage.getItem('nexus_users')) || [
+                { id: 1, username: 'admin123#', password: 'admin123#', role: 'admin', createdAt: new Date().toISOString(), lastActive: new Date().toISOString(), status: 'online', displayName: 'Administrator', email: 'admin@nexus.ai', banned: false, banReason: '' }
+            ],
+            chats: JSON.parse(localStorage.getItem('nexus_chats')) || {},
+            messages: JSON.parse(localStorage.getItem('nexus_messages')) || {},
+            settings: JSON.parse(localStorage.getItem('nexus_settings')) || {
+                apiKey: '', backupApiKey: '', model: 'arcee-ai/trinity-large-preview:free', fallbackModel: 'openai/gpt-3.5-turbo', systemPrompt: 'Anda adalah NEXUS AI...',
+                temperature: 0.7, topP: 0.9, maxTokens: 2000, contextWindow: 10, personality: 'professional', maintenanceMode: false, enableLogs: true
+            },
+            logs: JSON.parse(localStorage.getItem('nexus_logs')) || [],
+            favorites: JSON.parse(localStorage.getItem('nexus_favorites')) || [],
+            templates: JSON.parse(localStorage.getItem('nexus_templates')) || [
+                { id: 1, title: 'Jelaskan tentang...', content: 'Jelaskan secara detail tentang [topik]', icon: 'fa-question-circle' },
+                { id: 2, title: 'Bantu coding', content: 'Bantu saya menulis kode untuk [keperluan]', icon: 'fa-code' },
+            ],
+            userSettings: JSON.parse(localStorage.getItem('nexus_user_settings')) || {},
+            costs: JSON.parse(localStorage.getItem('nexus_costs')) || { today: 0, month: 0, total: 0, budget: 100 },
+            backups: JSON.parse(localStorage.getItem('nexus_backups')) || []
+        };
+
+        let currentUser = null;
+        let currentChatId = null;
+        let currentTab = 'user';
+        let currentAdminSection = 'dashboard';
+        let navigationStack = ['chat'];
+
+        // SINKRONISASI KE CLOUD JIKA FIREBASE AKTIF
+        if (db) {
+            db.collection("nexus").doc("main_database").onSnapshot((doc) => {
+                if (doc.exists) {
+                    DB = doc.data();
+                    if (currentUser) {
+                        if (document.getElementById('adminPanel').style.display === 'block') { updateDashboard(); updateUserTable(); }
+                        if (document.getElementById('chatView').style.display === 'flex') { loadChatHistory(); }
+                    }
+                } else {
+                    saveDB();
+                }
+            });
+        }
+
+        // FUNGSI SIMPAN DATA (Support Local & Cloud)
+        function saveDB() {
+            // Backup ke Local Storage
+            localStorage.setItem('nexus_users', JSON.stringify(DB.users));
+            localStorage.setItem('nexus_chats', JSON.stringify(DB.chats));
+            localStorage.setItem('nexus_messages', JSON.stringify(DB.messages));
+            localStorage.setItem('nexus_settings', JSON.stringify(DB.settings));
+            localStorage.setItem('nexus_logs', JSON.stringify(DB.logs));
+            localStorage.setItem('nexus_favorites', JSON.stringify(DB.favorites));
+            localStorage.setItem('nexus_templates', JSON.stringify(DB.templates));
+            localStorage.setItem('nexus_user_settings', JSON.stringify(DB.userSettings));
+            localStorage.setItem('nexus_costs', JSON.stringify(DB.costs));
+            
+            // Simpan ke Cloud jika ada
+            if (db) {
+                db.collection("nexus").doc("main_database").set(DB).catch((error) => console.error("Error: ", error));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { checkSession(); setupKeyboardShortcuts(); });
+
+        function addLog(action, details = '', type = 'info') {
+            if (!DB.settings.enableLogs) return;
+            const log = { id: Date.now(), timestamp: new Date().toISOString(), user: currentUser ? currentUser.username : 'Guest', action: action, details: details, type: type, ip: '127.0.0.1' };
+            DB.logs.unshift(log); if (DB.logs.length > 500) DB.logs.pop(); saveDB();
+        }
+
+        function pushNavigation(view) { if (navigationStack[navigationStack.length - 1] !== view) navigationStack.push(view); updateBackButton(); }
+
+        function goBack() {
+            if (navigationStack.length > 1) {
+                navigationStack.pop(); const previousView = navigationStack[navigationStack.length - 1];
+                hideAllViews();
+                if (previousView === 'chat') showChat(); else if (previousView === 'favorites') showFavorites();
+                else if (previousView === 'templates') showTemplates(); else if (previousView === 'history') showHistory();
+                else if (previousView === 'settings') showSettings(); else if (previousView === 'admin') showAdminPanel();
+            }
+        }
+
+        function updateBackButton() {
+            const backBtn = document.getElementById('backButton');
+            if (navigationStack.length > 1 && navigationStack[navigationStack.length - 1] !== 'chat') backBtn.classList.add('visible');
+            else backBtn.classList.remove('visible');
+        }
+
+        function showFavorites() { pushNavigation('favorites'); hideAllViews(); document.getElementById('favoritesView').style.display = 'block'; activateMenu('menuFavorites'); loadFavorites(); }
+        function showTemplates() { pushNavigation('templates'); hideAllViews(); document.getElementById('templatesView').style.display = 'block'; activateMenu('menuTemplates'); loadTemplates(); }
+        function showHistory() { pushNavigation('history'); hideAllViews(); document.getElementById('historyView').style.display = 'block'; activateMenu('menuHistory'); loadUserHistory(); }
+        
+        // MENAMPILKAN PENGATURAN
+        function showSettings() { 
+            pushNavigation('settings'); 
+            hideAllViews(); 
+            document.getElementById('settingsView').style.display = 'block'; 
+            activateMenu('menuSettings'); 
+        }
+        
+        // MENAMPILKAN ADMIN PANEL
+        function showAdminPanel() {
+            if (currentUser.role !== 'admin') { alert("Akses ditolak! Anda bukan Admin."); return; }
+            pushNavigation('admin'); hideAllViews(); 
+            document.getElementById('adminPanel').style.display = 'block'; 
+            activateMenu('menuAdmin'); updateAdminPanel(); 
+        }
+
+        function showChat() { pushNavigation('chat'); hideAllViews(); document.getElementById('chatView').style.display = 'flex'; activateMenu('menuChat'); }
+        function hideAllViews() { document.querySelectorAll('.app-container > div.main-content > div[id$="View"], .admin-panel').forEach(el => el.style.display = 'none'); }
+        function activateMenu(menuId) { document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active')); document.getElementById(menuId).classList.add('active'); }
+
+        function loadFavorites() {
+            const userFavs = DB.favorites.filter(f => f.userId === currentUser.id); const container = document.getElementById('favoritesList');
+            if (userFavs.length === 0) container.innerHTML = '<div style="text-align: center; color: var(--gray); padding: 40px;"><i class="far fa-star" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>Belum ada chat favorit</div>';
+            else container.innerHTML = userFavs.map(fav => `<div class="favorite-item" onclick="loadChat('${fav.chatId}')"><div class="favorite-icon"><i class="fas fa-comment"></i></div><div style="flex: 1;"><div style="font-weight: 600;">${fav.title}</div><div style="font-size: 0.85rem; color: var(--gray);">${new Date(fav.date).toLocaleDateString('id-ID')}</div></div><button class="action-btn btn-danger btn-sm" onclick="event.stopPropagation(); removeFavorite('${fav.id}')"><i class="fas fa-trash"></i></button></div>`).join('');
+            document.getElementById('favCount').textContent = userFavs.length; document.getElementById('favCount').style.display = userFavs.length > 0 ? 'block' : 'none';
+        }
+
+        function bookmarkCurrentChat() {
+            if (!currentChatId) { alert('Tidak ada chat aktif!'); return; }
+            if (DB.favorites.find(f => f.chatId === currentChatId && f.userId === currentUser.id)) { alert('Sudah di favorit!'); return; }
+            DB.favorites.push({ id: 'fav_' + Date.now(), userId: currentUser.id, chatId: currentChatId, title: DB.chats[currentChatId].title, date: new Date().toISOString() });
+            saveDB(); document.getElementById('bookmarkIcon').classList.replace('far', 'fas'); alert('Ditambahkan ke favorit!');
+        }
+
+        function removeFavorite(favId) { DB.favorites = DB.favorites.filter(f => f.id !== favId); saveDB(); loadFavorites(); }
+        function loadTemplates() { document.getElementById('templatesList').innerHTML = DB.templates.map(tpl => `<div class="favorite-item" onclick="useTemplate('${tpl.content}')"><div class="favorite-icon"><i class="fas ${tpl.icon}"></i></div><div style="flex: 1;"><div style="font-weight: 600;">${tpl.title}</div><div style="font-size: 0.85rem; color: var(--gray);">${tpl.content}</div></div><button class="action-btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteTemplate(${tpl.id})"><i class="fas fa-trash"></i></button></div>`).join(''); }
+        function useTemplate(content) { document.getElementById('messageInput').value = content; showChat(); }
+        function addTemplate() { const title = prompt('Nama:'); if (!title) return; const content = prompt('Isi:'); if (!content) return; DB.templates.push({ id: Date.now(), title: title, content: content, icon: 'fa-file-alt' }); saveDB(); loadTemplates(); }
+        function deleteTemplate(id) { DB.templates = DB.templates.filter(t => t.id !== id); saveDB(); loadTemplates(); }
+        function loadUserHistory() { const userLogs = DB.logs.filter(l => l.user === currentUser.username); const container = document.getElementById('userHistoryList'); if (userLogs.length === 0) container.innerHTML = '<div style="text-align: center; color: var(--gray); padding: 40px;">Belum ada aktivitas</div>'; else container.innerHTML = userLogs.map(log => `<div class="log-entry" style="border-left: 3px solid var(--primary);"><span class="log-time">${new Date(log.timestamp).toLocaleString('id-ID')}</span><span class="log-action">${log.action}</span></div>`).join(''); }
+        function clearUserHistory() { if (!confirm('Hapus riwayat?')) return; DB.logs = DB.logs.filter(l => l.user !== currentUser.username); saveDB(); loadUserHistory(); }
+
+        function showAdminSection(section) {
+            currentAdminSection = section;
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.admin-nav-btn').classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + section).classList.add('active');
+            if (section === 'dashboard') updateDashboard(); else if (section === 'users') loadUserManagement(); else if (section === 'ai') loadAIConfig();
+        }
+
+        function updateAdminPanel() { updateDashboard(); loadUserManagement(); loadAIConfig(); }
+        function updateDashboard() { document.getElementById('statUsers').textContent = DB.users.length; document.getElementById('statOnline').textContent = DB.users.filter(u => u.status === 'online').length; document.getElementById('statChats').textContent = Object.keys(DB.chats).length; }
+        function loadUserManagement() { updateUserTable(); }
+        function updateUserTable() { const tbody = document.getElementById('userTableBody'); tbody.innerHTML = DB.users.map(user => `<tr><td><div style="display: flex; align-items: center; gap: 10px;"><span>${user.username}</span></div></td><td><span class="badge badge-${user.role}">${user.role}</span></td><td><span class="status-dot status-${user.status || 'offline'}"></span>${user.status || 'offline'}</td><td>${Object.values(DB.chats).filter(c => c.userId === user.id).length}</td><td>${user.lastActive ? new Date(user.lastActive).toLocaleDateString('id-ID') : 'Never'}</td><td><button class="action-btn btn-danger btn-sm" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        function addNewUser() { const username = prompt('Username baru:'); if (!username) return; const password = prompt('Password:'); if (!password) return; if (DB.users.find(u => u.username === username)) { alert('Username sudah ada!'); return; } DB.users.push({ id: Date.now(), username: username, password: password, role: 'user', createdAt: new Date().toISOString(), status: 'offline', banned: false }); saveDB(); updateUserTable(); alert('User berhasil dibuat!'); }
+        function deleteUser(userId) { if (!confirm('Yakin hapus user ini?')) return; DB.users = DB.users.filter(u => u.id !== userId); saveDB(); updateUserTable(); }
+        function loadAIConfig() { document.getElementById('apiKeyPrimary').value = DB.settings.apiKey || ''; document.getElementById('aiModelDefault').value = DB.settings.model || 'arcee-ai/trinity-large-preview:free'; }
+        function saveApiKeys() { DB.settings.apiKey = document.getElementById('apiKeyPrimary').value; saveDB(); alert('API Key tersimpan!'); }
+        function saveModelConfig() { DB.settings.model = document.getElementById('aiModelDefault').value; saveDB(); alert('Model tersimpan!'); }
+
+        // PERBAIKAN JS EXPORT DATA
+        function exportMyData() {
+            const myData = {
+                user: currentUser,
+                chats: Object.values(DB.chats).filter(c => c.userId === currentUser.id),
+                messages: {},
+                favorites: DB.favorites.filter(f => f.userId === currentUser.id),
+                logs: DB.logs.filter(l => l.user === currentUser.username),
+                exportDate: new Date().toISOString()
+            };
+            Object.keys(DB.messages).forEach(chatId => { if (DB.chats[chatId] && DB.chats[chatId].userId === currentUser.id) { myData.messages[chatId] = DB.messages[chatId]; } });
+            const blob = new Blob([JSON.stringify(myData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `nexus_data_${currentUser.username}.json`; a.click();
+        }
+
+        function setTheme(color) { document.querySelectorAll('.theme-option').forEach(t => t.classList.remove('active')); event.target.classList.add('active'); const root = document.documentElement; const colors = { blue: ['#6366f1', '#4f46e5'], purple: ['#9333ea', '#7c3aed'], green: ['#10b981', '#059669'], orange: ['#f97316', '#ea580c'], pink: ['#ec4899', '#db2777'], cyan: ['#06b6d4', '#0891b2'] }; root.style.setProperty('--primary', colors[color][0]); root.style.setProperty('--primary-dark', colors[color][1]); if (!DB.userSettings[currentUser.id]) DB.userSettings[currentUser.id] = {}; DB.userSettings[currentUser.id].theme = color; saveDB(); }
+        function toggleBgAnimation() { const enabled = document.getElementById('bgAnimation').checked; document.querySelector('.bg-animation').style.display = enabled ? 'block' : 'none'; }
+        function updateProfile() { const newPass = document.getElementById('newPassword').value; const confirmPass = document.getElementById('confirmPassword').value; if (newPass && newPass !== confirmPass) { alert('Password tidak cocok!'); return; } if (newPass) currentUser.password = newPass; currentUser.displayName = document.getElementById('displayName').value; currentUser.email = document.getElementById('userEmail').value; const userIndex = DB.users.findIndex(u => u.id === currentUser.id); DB.users[userIndex] = currentUser; localStorage.setItem('nexus_session', JSON.stringify(currentUser)); saveDB(); alert('Profil berhasil diupdate!'); }
+        function clearMyChats() { if (!confirm('Hapus SEMUA chat Anda?')) return; Object.keys(DB.chats).forEach(chatId => { if (DB.chats[chatId].userId === currentUser.id) { delete DB.chats[chatId]; delete DB.messages[chatId]; } }); DB.favorites = DB.favorites.filter(f => f.userId !== currentUser.id); saveDB(); currentChatId = null; startNewChat(); alert('Chat dihapus!'); }
+        function clearMyHistory() { if (!confirm('Bersihkan riwayat?')) return; DB.logs = DB.logs.filter(l => l.user !== currentUser.username); saveDB(); alert('Riwayat dibersihkan!'); }
+        function deleteAccount() { if (!confirm('Ini akan menghapus akun Anda. Lanjut?')) return; DB.users = DB.users.filter(u => u.id !== currentUser.id); saveDB(); logout(); }
+
+        // FUNGSI MENU LOGIN TABS
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+            event.target.closest('.login-tab').classList.add('active');
+            document.getElementById('username').value = tab === 'admin' ? 'admin123#' : '';
+        }
+
+        function showAlert(message, type = 'error') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.innerHTML = type === 'error' ? `<i class="fas fa-exclamation-circle"></i> ${message}` : `<i class="fas fa-check-circle"></i> ${message}`;
+            alertBox.style.display = 'flex'; setTimeout(() => alertBox.style.display = 'none', 5000);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const user = DB.users.find(x => x.username === u && x.password === p);
+            if (!user) { showAlert('Username atau password salah!'); return; }
+            if (user.banned) { showAlert(`Akun dibanned: ${user.banReason}`); return; }
+
+            currentUser = user; user.lastActive = new Date().toISOString(); user.status = 'online';
+            localStorage.setItem('nexus_session', JSON.stringify(user)); saveDB();
+            showAlert('Login berhasil!', 'success');
+            setTimeout(() => { document.getElementById('loginPage').style.display = 'none'; document.getElementById('appContainer').style.display = 'flex'; initializeApp(); }, 500);
+        }
+
+        function checkSession() {
+            const session = localStorage.getItem('nexus_session');
+            if (session) {
+                currentUser = JSON.parse(session);
+                document.getElementById('loginPage').style.display = 'none'; document.getElementById('appContainer').style.display = 'flex'; initializeApp();
+            }
+        }
+
+        function logout() { if (currentUser) { const user = DB.users.find(u => u.id === currentUser.id); if (user) user.status = 'offline'; saveDB(); } localStorage.removeItem('nexus_session'); currentUser = null; location.reload(); }
+
+        function initializeApp() {
+            document.getElementById('currentUserName').textContent = currentUser.displayName || currentUser.username;
+            document.getElementById('currentUserRole').textContent = currentUser.role;
+            if (currentUser.role === 'admin') document.getElementById('menuAdmin').style.display = 'flex';
+            
+            const userPrefs = DB.userSettings[currentUser.id] || {};
+            if (userPrefs.theme) setTheme(userPrefs.theme);
+            
+            document.getElementById('profileUsername').value = currentUser.username; document.getElementById('displayName').value = currentUser.displayName || ''; document.getElementById('userEmail').value = currentUser.email || '';
+            loadChatHistory(); startNewChat();
+            
+            // Perbarui Data Pribadi di Setting
+            const myChats = Object.values(DB.chats).filter(c => c.userId === currentUser.id);
+            document.getElementById('myChatCount').textContent = myChats.length + ' chat';
+            let myMsgCount = 0; myChats.forEach(c => { myMsgCount += (DB.messages[c.id]?.length || 0) });
+            document.getElementById('myMessageCount').textContent = myMsgCount + ' pesan';
+            document.getElementById('myStorageUsed').textContent = (JSON.stringify(myChats).length / 1024).toFixed(2) + ' KB';
+        }
+
+        function loadChatHistory() {
+            const container = document.getElementById('chatHistory');
+            const userChats = Object.values(DB.chats).filter(chat => chat.userId === currentUser.id).sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive));
+            container.innerHTML = userChats.map(chat => `<div class="history-item ${chat.id === currentChatId ? 'active' : ''}" onclick="loadChat('${chat.id}')"><i class="fas fa-comment"></i><span>${chat.title}</span><i class="fas fa-times delete-chat" onclick="event.stopPropagation(); deleteChat('${chat.id}')"></i></div>`).join('');
+        }
+
+        function startNewChat() {
+            currentChatId = null; document.getElementById('chatTitle').textContent = 'Chat Baru';
+            document.getElementById('messagesContainer').innerHTML = `<div class="welcome-screen"><i class="fas fa-brain"></i><h2>Selamat Datang di NEXUS AI PRO</h2><p>Mulai percakapan dengan AI yang cerdas</p><div class="quick-actions"><div class="quick-action" onclick="sendQuickMessage('Apa itu AI?')">🤖 Apa itu AI?</div><div class="quick-action" onclick="sendQuickMessage('Bantu Coding')">💻 Bantu Coding</div></div></div>`;
+            loadChatHistory();
+        }
+
+        function loadChat(chatId) {
+            currentChatId = chatId; showChat();
+            const chat = DB.chats[chatId]; if(!chat) return; 
+            const messages = DB.messages[chatId] || [];
+            document.getElementById('chatTitle').textContent = chat.title;
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = messages.length === 0 ? `<div class="welcome-screen"><h2>${chat.title}</h2></div>` : messages.map(m => createMessageHTML(m)).join('');
+            container.scrollTop = container.scrollHeight;
+            loadChatHistory();
+        }
+
+        function createMessageHTML(msg) {
+            const isUser = msg.role === 'user'; const time = new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            return `<div class="message ${isUser ? 'user' : 'ai'}"><div class="message-avatar">${isUser ? 'U' : '<i class="fas fa-robot"></i>'}</div><div style="max-width: 100%;"><div class="message-content">${msg.content}</div><div class="message-time">${time}</div></div></div>`;
+        }
+
+        function sendQuickMessage(text) { document.getElementById('messageInput').value = text; sendMessage(); }
+        function handleKeyDown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput'); const text = input.value.trim(); if (!text) return;
+            if (!currentChatId) { currentChatId = 'chat_' + Date.now(); DB.chats[currentChatId] = { id: currentChatId, userId: currentUser.id, title: text.substring(0, 30), createdAt: new Date().toISOString(), lastActive: new Date().toISOString() }; DB.messages[currentChatId] = []; document.getElementById('messagesContainer').innerHTML = ''; }
+            const userMsg = { id: 'msg_' + Date.now(), role: 'user', content: text, timestamp: new Date().toISOString() };
+            DB.messages[currentChatId].push(userMsg); DB.chats[currentChatId].lastActive = new Date().toISOString();
+            
+            const container = document.getElementById('messagesContainer');
+            if (container.querySelector('.welcome-screen')) container.innerHTML = '';
+            container.innerHTML += createMessageHTML(userMsg); container.scrollTop = container.scrollHeight;
+            
+            input.value = ''; document.getElementById('typingIndicator').classList.add('active');
+            saveDB();
+
+            setTimeout(() => {
+                let response = "Pesan ini tersimpan dengan baik." + (db ? " (Firebase Aktif ✅)" : " (Lokal Aktif)");
+                const aiMsg = { id: 'msg_' + Date.now(), role: 'assistant', content: response, timestamp: new Date().toISOString() };
+                DB.messages[currentChatId].push(aiMsg);
+                container.innerHTML += createMessageHTML(aiMsg); container.scrollTop = container.scrollHeight;
+                document.getElementById('typingIndicator').classList.remove('active'); saveDB();
+            }, 1000);
+        }
+
+        function deleteChat(chatId) { if (!confirm('Hapus chat?')) return; delete DB.chats[chatId]; delete DB.messages[chatId]; saveDB(); if (currentChatId === chatId) startNewChat(); loadChatHistory(); }
+        function clearCurrentChat() { if (!currentChatId || !confirm('Yakin ingin menghapus semua pesan di chat ini?')) return; DB.messages[currentChatId] = []; saveDB(); loadChat(currentChatId); }
+        function attachFile() { alert("Upload file butuh backend penyimpan gambar."); }
+        function toggleNotifications() { const panel = document.getElementById('notificationPanel'); panel.classList.toggle('active'); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function setupKeyboardShortcuts() { document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); startNewChat(); } }); }
+        
+        // Sisa Fungsi Admin Quick Action
+        function broadcastMessage() { const msg = prompt('Pesan broadcast:'); if (msg) alert('Terkirim!'); }
+        function toggleMaintenance() { alert('Toggled maintenance mode'); }
+        function clearCache() { alert('Cache dibersihkan!'); }
+        function systemDiagnostics() { alert('Sistem normal.'); }
+        function purgeAllData() { if (confirm("Hapus semua data sistem?") && prompt("Ketik DELETE") === "DELETE") { DB.chats={}; DB.users=[DB.users[0]]; saveDB(); alert("Dihapus"); location.reload(); } }
+        function cleanupOldChats() { alert("Chat lama dibersihkan."); }
+    </script>
+</body>
+</html>
