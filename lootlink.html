@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AditLink - Safelink & Shortener</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { background-color: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); width: 100%; max-width: 500px; text-align: center; }
+        h1 { color: #38bdf8; margin-bottom: 0.5rem; }
+        p { color: #94a3b8; margin-bottom: 2rem; font-size: 0.95rem; }
+        .input-group { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        input[type="url"], input[type="text"] { padding: 1rem; border-radius: 8px; border: 1px solid #334155; background-color: #0f172a; color: #f8fafc; outline: none; }
+        input[type="url"]:focus { border-color: #38bdf8; }
+        button { padding: 1rem; border-radius: 8px; border: none; background-color: #0ea5e9; color: white; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #0284c7; }
+        button:disabled { background-color: #475569; cursor: not-allowed; }
+        .result-box { display: none; margin-top: 1.5rem; padding: 1.5rem; background-color: #0f172a; border-radius: 8px; border: 1px dashed #38bdf8; }
+        .result-box.active { display: block; }
+        .copy-btn { background-color: #22c55e; width: 100%; margin-top: 10px; }
+        .copy-btn:hover { background-color: #16a34a; }
+        
+        /* Visitor Mode Styles */
+        .timer-circle { font-size: 3rem; font-weight: bold; color: #facc15; margin: 2rem 0; }
+        .ad-placeholder { background-color: #334155; padding: 20px; border-radius: 8px; margin: 20px 0; color: #64748b; font-size: 0.8rem; border: 1px dashed #475569;}
+        
+        /* Loading Text */
+        #loadingMsg { color: #facc15; font-weight: bold; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        
+        <div id="creatorArea">
+            <h1>AditLink</h1>
+            <p>Monetisasi link kamu. Ubah URL panjang jadi safelink.</p>
+            <div class="input-group">
+                <input type="url" id="longUrl" placeholder="https://contoh.com" required>
+                <p id="loadingMsg">Memproses link ke database...</p>
+                <button id="generateBtn">Buat Safelink</button>
+            </div>
+            <div class="result-box" id="resultBox">
+                <p style="margin-bottom: 10px;">Berhasil! Ini link untuk dibagikan:</p>
+                <input type="text" id="shortUrlDisplay" readonly>
+                <button class="copy-btn" id="copyBtn">Salin Link</button>
+            </div>
+        </div>
+
+        <div id="visitorArea" style="display: none;">
+            <h1>AditLink</h1>
+            <p id="visitorStatus">Mempersiapkan link tujuanmu...</p>
+            
+            <div class="ad-placeholder">Ruang Iklan (Bisa diisi Adsense/Banner)</div>
+
+            <div class="timer-circle" id="timer" style="display: none;">5</div>
+            <button id="getLinkBtn" style="display:none; width:100%; background-color: #eab308;">Get Link</button>
+
+            <div class="ad-placeholder">Ruang Iklan (Bisa diisi Adsense/Banner)</div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Konfigurasi Firebase milikmu
+        const firebaseConfig = {
+            apiKey: "AIzaSyALWlgAyQXUomwnf520gmdoBMOFbdlWaB0",
+            authDomain: "alamak-ce66a.firebaseapp.com",
+            databaseURL: "https://alamak-ce66a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "alamak-ce66a",
+            storageBucket: "alamak-ce66a.firebasestorage.app",
+            messagingSenderId: "496086877660",
+            appId: "1:496086877660:web:5489dd52a826a9c9bd7b19",
+            measurementId: "G-VD0W4Z9XJE"
+        };
+
+        // Inisialisasi Firebase & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elemen UI
+        const creatorArea = document.getElementById('creatorArea');
+        const visitorArea = document.getElementById('visitorArea');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const getLinkBtn = document.getElementById('getLinkBtn');
+        const loadingMsg = document.getElementById('loadingMsg');
+        
+        // Variabel untuk menyimpan URL tujuan di mode visitor
+        let targetUrl = "";
+
+        // ==========================================
+        // LOGIKA DETEKSI PENGUNJUNG / CREATOR
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const linkId = urlParams.get('id');
+
+        if (linkId) {
+            // MODE VISITOR: Sembunyikan pembuat link, tampilkan safelink
+            creatorArea.style.display = 'none';
+            visitorArea.style.display = 'block';
+
+            // Ambil data dari Firestore
+            async function fetchLink() {
+                try {
+                    const docRef = doc(db, "links", linkId);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        targetUrl = docSnap.data().originalUrl;
+                        startCountdown(); // Mulai timer jika link ketemu
+                    } else {
+                        document.getElementById('visitorStatus').innerText = "Oops! Link tidak ditemukan atau sudah dihapus.";
+                    }
+                } catch (error) {
+                    console.error("Error mengambil data:", error);
+                    document.getElementById('visitorStatus').innerText = "Gagal memuat link. Pastikan koneksi internet stabil.";
+                }
+            }
+
+            fetchLink();
+
+        } else {
+            // MODE CREATOR: Event Listener untuk Tombol Buat Link
+            generateBtn.addEventListener('click', async () => {
+                const longUrl = document.getElementById('longUrl').value;
+                
+                if (!longUrl || !longUrl.startsWith('http')) {
+                    alert('Tolong masukkan URL yang valid (dimulai dengan http:// atau https://)');
+                    return;
+                }
+
+                // Ubah status tombol jadi loading
+                generateBtn.disabled = true;
+                loadingMsg.style.display = 'block';
+
+                try {
+                    // Simpan ke Firestore di koleksi "links"
+                    const docRef = await addDoc(collection(db, "links"), {
+                        originalUrl: longUrl,
+                        createdAt: new Date()
+                    });
+
+                    // Buat link pendek menggunakan ID dari Firebase
+                    const baseUrl = window.location.href.split('?')[0]; 
+                    const finalLink = `${baseUrl}?id=${docRef.id}`;
+                    
+                    document.getElementById('shortUrlDisplay').value = finalLink;
+                    document.getElementById('resultBox').classList.add('active');
+                } catch (e) {
+                    console.error("Error menambahkan dokumen: ", e);
+                    alert("Gagal membuat link! Cek pengaturan database Firestore kamu.");
+                } finally {
+                    // Kembalikan status tombol
+                    generateBtn.disabled = false;
+                    loadingMsg.style.display = 'none';
+                }
+            });
+
+            // Event Listener untuk Tombol Copy
+            copyBtn.addEventListener('click', () => {
+                const copyText = document.getElementById('shortUrlDisplay');
+                copyText.select();
+                copyText.setSelectionRange(0, 99999); 
+                try {
+                    document.execCommand("copy");
+                    alert("Link berhasil disalin!");
+                } catch (err) {
+                    alert("Gagal menyalin link.");
+                }
+            });
+        }
+
+        // ==========================================
+        // FUNGSI COUNTDOWN VISITOR
+        // ==========================================
+        function startCountdown() {
+            let timeLeft = 5;
+            const timerEl = document.getElementById('timer');
+            
+            document.getElementById('visitorStatus').innerText = "Harap tunggu sebentar...";
+            timerEl.style.display = 'block';
+            timerEl.innerText = timeLeft;
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    timerEl.style.display = 'none';
+                    getLinkBtn.style.display = 'block';
+                    document.getElementById('visitorStatus').innerText = "Link tujuan sudah siap!";
+                }
+            }, 1000);
+        }
+
+        // Event Listener Tombol Get Link
+        getLinkBtn.addEventListener('click', () => {
+            if (targetUrl) {
+                window.location.href = targetUrl; // Redirect ke link asli
+            }
+        });
+    </script>
+
+</body>
+</html>
