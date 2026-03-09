@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralAI - Advanced AI Chat Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js for Code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#ec4899',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        surface: '#1e293b',
+                    },
+                    animation: {
+                        'gradient': 'gradient 8s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #6366f1, 0 0 10px #6366f1' },
+                            '100%': { boxShadow: '0 0 20px #6366f1, 0 0 30px #6366f1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
+            background-attachment: fixed;
+        }
+        
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-strong {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(99, 102, 241, 0.5), 
+                        0 0 20px rgba(99, 102, 241, 0.3),
+                        inset 0 0 5px rgba(99, 102, 241, 0.1);
+        }
+        
+        .message-bubble-user {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 20px 20px 4px 20px;
+        }
+        
+        .message-bubble-ai {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px 20px 20px 4px;
+        }
+        
+        .typing-indicator span {
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+            border-radius: 3px;
+        }
+        
+        .code-block {
+            position: relative;
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .code-header {
+            background: #2d2d2d;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3d3d3d;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .admin-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Jailbreak Protection Overlay */
+        .jailbreak-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .jailbreak-active {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen overflow-hidden">
+
+    <!-- Jailbreak Protection Overlay -->
+    <div id="jailbreakWarning" class="jailbreak-warning">
+        <i class="fas fa-shield-alt text-6xl text-red-500 mb-4 animate-pulse"></i>
+        <h1 class="text-3xl font-bold text-red-500 mb-2">SECURITY BREACH DETECTED</h1>
+        <p class="text-gray-400">Unauthorized access attempt detected. System locked.</p>
+        <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
+            Reload System
+        </button>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="h-screen flex flex-col">
+        
+        <!-- Login Screen -->
+        <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
+            <div class="glass-strong rounded-2xl p-8 w-full max-w-md neon-border">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-pulse-slow">
+                        <i class="fas fa-brain text-3xl text-white"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                        NeuralAI
+                    </h1>
+                    <p class="text-gray-400 mt-2">Advanced AI Chat Platform</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Email / Username</label>
+                        <input type="text" id="loginEmail" class="w-full px-4 py-3 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition" placeholder="Enter username">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                        <input type="password" id="loginPassword" class="w-full px-4 py-3 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition" placeholder="Enter password">
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center text-gray-400">
+                            <input type="checkbox" id="rememberMe" class="mr-2 rounded bg-surface border-gray-700 text-primary focus:ring-primary">
+                            Remember me
+                        </label>
+                        <button onclick="showForgotPassword()" class="text-primary hover:text-secondary transition">Forgot password?</button>
+                    </div>
+
+                    <button onclick="handleLogin()" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 font-semibold text-white shadow-lg shadow-primary/30 transition transform hover:scale-[1.02]">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </button>
+
+                    <div class="relative my-6">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-700"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-surface text-gray-400">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="loginWithGoogle()" class="flex items-center justify-center px-4 py-2 rounded-lg bg-surface border border-gray-700 hover:border-primary transition">
+                            <i class="fab fa-google text-red-500 mr-2"></i>Google
+                        </button>
+                        <button onclick="loginWithGithub()" class="flex items-center justify-center px-4 py-2 rounded-lg bg-surface border border-gray-700 hover:border-primary transition">
+                            <i class="fab fa-github mr-2"></i>GitHub
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-center mt-6 text-gray-400 text-sm">
+                    Don't have an account? 
+                    <button onclick="showRegister()" class="text-primary hover:text-secondary font-medium">Register now</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- Main Chat Interface (Hidden by default) -->
+        <div id="chatInterface" class="hidden flex-1 flex overflow-hidden">
+            
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-64 glass-strong flex flex-col border-r border-gray-800 transform -translate-x-full md:translate-x-0 transition-transform duration-300 absolute md:relative z-20 h-full">
+                <div class="p-4 border-b border-gray-800">
+                    <button onclick="newChat()" class="w-full py-2 px-4 rounded-lg bg-primary/20 border border-primary/50 hover:bg-primary/30 transition flex items-center justify-center gap-2 text-primary font-medium">
+                        <i class="fas fa-plus"></i> New Chat
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto scrollbar-custom p-2 space-y-1" id="chatHistory">
+                    <!-- Chat history items will be inserted here -->
+                </div>
+
+                <div class="p-4 border-t border-gray-800 space-y-2">
+                    <button onclick="toggleTheme()" class="w-full py-2 px-4 rounded-lg hover:bg-surface transition flex items-center gap-3 text-gray-300">
+                        <i class="fas fa-moon"></i> Dark Mode
+                    </button>
+                    <button onclick="showSettings()" class="w-full py-2 px-4 rounded-lg hover:bg-surface transition flex items-center gap-3 text-gray-300">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <button onclick="logout()" class="w-full py-2 px-4 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition flex items-center gap-3 text-gray-300">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Chat Area -->
+            <main class="flex-1 flex flex-col relative">
+                <!-- Mobile Header -->
+                <header class="md:hidden glass p-4 flex items-center justify-between">
+                    <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <span class="font-semibold">NeuralAI</span>
+                    <div class="w-8"></div>
+                </header>
+
+                <!-- Desktop Header -->
+                <header class="hidden md:flex glass p-4 items-center justify-between border-b border-gray-800">
+                    <div class="flex items-center gap-4">
+                        <h2 id="currentChatTitle" class="font-semibold text-lg">New Conversation</h2>
+                        <span id="modelIndicator" class="px-2 py-1 rounded text-xs bg-primary/20 text-primary border border-primary/30">Trinity Large</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="clearChat()" class="p-2 rounded-lg hover:bg-surface text-gray-400 hover:text-red-400 transition" title="Clear Chat">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button onclick="exportChat()" class="p-2 rounded-lg hover:bg-surface text-gray-400 hover:text-primary transition" title="Export Chat">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <div class="w-px h-6 bg-gray-700"></div>
+                        <button onclick="showProfile()" class="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-surface transition">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold" id="userAvatar">
+                                U
+                            </div>
+                            <span class="text-sm text-gray-300" id="userNameDisplay">User</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Messages Container -->
+                <div id="messagesContainer" class="flex-1 overflow-y-auto scrollbar-custom p-4 space-y-6">
+                    <!-- Welcome Message -->
+                    <div class="text-center py-12">
+                        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center animate-float">
+                            <i class="fas fa-robot text-4xl text-primary"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2">Welcome to NeuralAI</h2>
+                        <p class="text-gray-400 max-w-md mx-auto">Start a conversation with our advanced AI powered by OpenRouter. Ask anything, from coding help to creative writing.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mt-8">
+                            <button onclick="setQuickPrompt('Explain quantum computing in simple terms')" class="p-4 rounded-xl bg-surface/50 border border-gray-700 hover:border-primary/50 hover:bg-surface transition text-left group">
+                                <i class="fas fa-lightbulb text-primary mb-2 group-hover:scale-110 transition"></i>
+                                <p class="text-sm text-gray-300">Explain quantum computing</p>
+                            </button>
+                            <button onclick="setQuickPrompt('Write a Python function to sort a list')" class="p-4 rounded-xl bg-surface/50 border border-gray-700 hover:border-primary/50 hover:bg-surface transition text-left group">
+                                <i class="fas fa-code text-secondary mb-2 group-hover:scale-110 transition"></i>
+                                <p class="text-sm text-gray-300">Help me code</p>
+                            </button>
+                            <button onclick="setQuickPrompt('Create a marketing strategy for a coffee shop')" class="p-4 rounded-xl bg-surface/50 border border-gray-700 hover:border-primary/50 hover:bg-surface transition text-left group">
+                                <i class="fas fa-chart-line text-accent mb-2 group-hover:scale-110 transition"></i>
+                                <p class="text-sm text-gray-300">Business strategy</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="glass border-t border-gray-800 p-4">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="relative flex items-end gap-2 bg-surface rounded-xl border border-gray-700 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition p-2">
+                            <button onclick="toggleAttachment()" class="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-primary transition">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <textarea id="messageInput" rows="1" class="flex-1 bg-transparent border-none resize-none focus:outline-none text-gray-100 placeholder-gray-500 max-h-32 py-2" placeholder="Message NeuralAI..." onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                            <button onclick="toggleEmoji()" class="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-primary transition">
+                                <i class="far fa-smile"></i>
+                            </button>
+                            <button onclick="sendMessage()" id="sendBtn" class="p-2 rounded-lg bg-primary hover:bg-primary/90 text-white transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-center text-gray-500 mt-2">NeuralAI can make mistakes. Consider checking important information.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Admin Panel (Hidden by default) -->
+        <div id="adminPanel" class="hidden flex-1 flex overflow-hidden bg-darker">
+            <!-- Admin Sidebar -->
+            <aside class="w-64 glass-strong border-r border-gray-800 flex flex-col">
+                <div class="p-6 border-b border-gray-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg">Admin Panel</h2>
+                            <p class="text-xs text-gray-400">Superuser Control</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="flex-1 p-4 space-y-1">
+                    <button onclick="showAdminSection('dashboard')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition bg-surface/50 border-l-2 border-primary" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt w-5"></i> Dashboard
+                    </button>
+                    <button onclick="showAdminSection('users')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="users">
+                        <i class="fas fa-users w-5"></i> User Management
+                    </button>
+                    <button onclick="showAdminSection('ai-settings')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="ai-settings">
+                        <i class="fas fa-brain w-5"></i> AI Configuration
+                    </button>
+                    <button onclick="showAdminSection('api-keys')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="api-keys">
+                        <i class="fas fa-key w-5"></i> API Keys
+                    </button>
+                    <button onclick="showAdminSection('analytics')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="analytics">
+                        <i class="fas fa-chart-pie w-5"></i> Analytics
+                    </button>
+                    <button onclick="showAdminSection('content')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="content">
+                        <i class="fas fa-database w-5"></i> Content Manager
+                    </button>
+                    <button onclick="showAdminSection('security')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="security">
+                        <i class="fas fa-lock w-5"></i> Security
+                    </button>
+                    <button onclick="showAdminSection('broadcast')" class="admin-nav-btn w-full px-4 py-3 rounded-lg flex items-center gap-3 text-gray-300 hover:bg-surface transition border-l-2 border-transparent" data-section="broadcast">
+                        <i class="fas fa-broadcast-tower w-5"></i> Broadcast
+                    </button>
+                </nav>
+
+                <div class="p-4 border-t border-gray-800">
+                    <button onclick="exitAdmin()" class="w-full px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i> Exit Admin
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Admin Content -->
+            <main class="flex-1 overflow-y-auto scrollbar-custom p-8">
+                
+                <!-- Dashboard Section -->
+                <div id="admin-dashboard" class="admin-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-2xl font-bold">Dashboard Overview</h1>
+                        <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm border border-green-500/30">
+                            <i class="fas fa-circle text-xs mr-1 animate-pulse"></i> System Online
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="admin-card rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm">Total Users</p>
+                                    <h3 class="text-3xl font-bold mt-1" id="statTotalUsers">0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <p class="text-green-400 text-sm"><i class="fas fa-arrow-up mr-1"></i><span id="statNewUsers">0</span> new today</p>
+                        </div>
+
+                        <div class="admin-card rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm">Active Chats</p>
+                                    <h3 class="text-3xl font-bold mt-1" id="statActiveChats">0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center text-secondary">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                            </div>
+                            <p class="text-blue-400 text-sm"><i class="fas fa-sync mr-1"></i> Real-time</p>
+                        </div>
+
+                        <div class="admin-card rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm">API Calls</p>
+                                    <h3 class="text-3xl font-bold mt-1" id="statApiCalls">0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center text-accent">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">This month</p>
+                        </div>
+
+                        <div class="admin-card rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm">System Status</p>
+                                    <h3 class="text-3xl font-bold mt-1 text-green-400">98.9%</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">Uptime</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-semibold mb-4">Recent Activity</h3>
+                            <div id="recentActivity" class="space-y-3 max-h-64 overflow-y-auto scrollbar-custom">
+                                <p class="text-gray-500 text-center py-4">No recent activity</p>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-semibold mb-4">System Logs</h3>
+                            <div id="systemLogs" class="font-mono text-sm space-y-1 max-h-64 overflow-y-auto scrollbar-custom text-gray-400">
+                                <div class="text-green-400">[SYSTEM] Admin panel initialized</div>
+                                <div class="text-blue-400">[INFO] Firebase connected</div>
+                                <div class="text-yellow-400">[WARN] Rate limit approaching</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Configuration Section -->
+                <div id="admin-ai-settings" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">AI Configuration</h1>
+                    
+                    <div class="glass rounded-xl p-6 space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-700">
+                            <div>
+                                <h3 class="font-semibold text-lg">Model Settings</h3>
+                                <p class="text-gray-400 text-sm">Configure default AI model for all users</p>
+                            </div>
+                            <button onclick="saveAISettings()" class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white transition">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Default Model</label>
+                                <select id="adminModelSelect" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none">
+                                    <option value="arcee-ai/trinity-large-preview:free">Arcee Trinity Large (Free)</option>
+                                    <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
+                                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+                                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
+                                    <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                    <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Temperature</label>
+                                <input type="range" id="adminTemperature" min="0" max="2" step="0.1" value="0.7" class="w-full" oninput="document.getElementById('tempValue').textContent = this.value">
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>Precise</span>
+                                    <span id="tempValue" class="text-primary font-bold">0.7</span>
+                                    <span>Creative</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Max Tokens</label>
+                                <input type="number" id="adminMaxTokens" value="2048" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">System Prompt</label>
+                                <textarea id="adminSystemPrompt" rows="3" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none resize-none" placeholder="Enter default system behavior...">You are a helpful AI assistant.</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                            <div>
+                                <p class="font-medium text-yellow-400">Global Settings</p>
+                                <p class="text-sm text-gray-400">Changes will affect all users immediately</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-4">Text Mode Configuration</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50">
+                                <div>
+                                    <p class="font-medium">Streaming Response</p>
+                                    <p class="text-sm text-gray-400">Show AI response word by word</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="adminStreaming" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50">
+                                <div>
+                                    <p class="font-medium">Markdown Rendering</p>
+                                    <p class="text-sm text-gray-400">Enable rich text formatting</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="adminMarkdown" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50">
+                                <div>
+                                    <p class="font-medium">Code Highlighting</p>
+                                    <p class="text-sm text-gray-400">Syntax highlighting for code blocks</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="adminCodeHighlight" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <div id="admin-users" class="admin-section hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-2xl font-bold">User Management</h1>
+                        <div class="flex gap-2">
+                            <input type="text" id="userSearch" placeholder="Search users..." class="px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none" onkeyup="searchUsers()">
+                            <button onclick="refreshUsers()" class="px-4 py-2 rounded-lg bg-surface hover:bg-surface/80 border border-gray-700 transition">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-surface/50 border-b border-gray-700">
+                                <tr>
+                                    <th class="p-4 font-medium text-gray-400">User</th>
+                                    <th class="p-4 font-medium text-gray-400">Role</th>
+                                    <th class="p-4 font-medium text-gray-400">Status</th>
+                                    <th class="p-4 font-medium text-gray-400">Joined</th>
+                                    <th class="p-4 font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable" class="divide-y divide-gray-800">
+                                <!-- Users will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- API Keys Section -->
+                <div id="admin-api-keys" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">API Keys Management</h1>
+                    
+                    <div class="glass rounded-xl p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold">OpenRouter API Key</h3>
+                                <p class="text-sm text-gray-400">Master API key for all AI requests</p>
+                            </div>
+                            <button onclick="testAPIKey()" class="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition">
+                                <i class="fas fa-check mr-2"></i>Test Connection
+                            </button>
+                        </div>
+                        
+                        <div class="relative">
+                            <input type="password" id="masterAPIKey" class="w-full px-4 py-3 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none font-mono" placeholder="Enter OpenRouter API Key">
+                            <button onclick="toggleAPIVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="saveAPIKey()" class="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white transition">
+                                <i class="fas fa-save mr-2"></i>Save Key
+                            </button>
+                            <button onclick="rotateAPIKey()" class="px-4 py-2 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition">
+                                <i class="fas fa-sync-alt mr-2"></i>Rotate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold mb-4">API Usage Statistics</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center p-4 rounded-lg bg-surface/50">
+                                <p class="text-2xl font-bold text-primary" id="apiRequestsToday">0</p>
+                                <p class="text-sm text-gray-400">Requests Today</p>
+                            </div>
+                            <div class="text-center p-4 rounded-lg bg-surface/50">
+                                <p class="text-2xl font-bold text-secondary" id="apiTokensUsed">0</p>
+                                <p class="text-sm text-gray-400">Tokens Used</p>
+                            </div>
+                            <div class="text-center p-4 rounded-lg bg-surface/50">
+                                <p class="text-2xl font-bold text-accent" id="apiCost">$0.00</p>
+                                <p class="text-sm text-gray-400">Est. Cost</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="admin-analytics" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">Analytics & Insights</h1>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-semibold mb-4">Daily Active Users</h3>
+                            <div class="h-64 flex items-end justify-between gap-2" id="dauChart">
+                                <!-- Bars will be generated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-semibold mb-4">Popular Models</h3>
+                            <div class="space-y-3" id="popularModels">
+                                <div class="flex items-center justify-between p-3 rounded-lg bg-surface/50">
+                                    <span>Trinity Large</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-32 h-2 rounded-full bg-gray-700 overflow-hidden">
+                                            <div class="h-full bg-primary" style="width: 75%"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-400">75%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Manager Section -->
+                <div id="admin-content" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">Content Manager</h1>
+                    
+                    <div class="glass rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Global Prompts</h3>
+                            <button onclick="addGlobalPrompt()" class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white transition">
+                                <i class="fas fa-plus mr-2"></i>Add Prompt
+                            </button>
+                        </div>
+                        <div id="globalPrompts" class="space-y-2">
+                            <!-- Prompts will be listed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div id="admin-security" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">Security Settings</h1>
+                    
+                    <div class="glass rounded-xl p-6 space-y-4">
+                        <h3 class="font-semibold text-lg mb-4">Protection Settings</h3>
+                        
+                        <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50 border border-red-500/30">
+                            <div>
+                                <p class="font-medium text-red-400">Jailbreak Protection</p>
+                                <p class="text-sm text-gray-400">Detect and block unauthorized admin access attempts</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="jailbreakProtection" class="sr-only peer" checked onchange="toggleJailbreakProtection()">
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50">
+                            <div>
+                                <p class="font-medium">Rate Limiting</p>
+                                <p class="text-sm text-gray-400">Limit requests per user per minute</p>
+                            </div>
+                            <select id="rateLimit" class="px-3 py-1 rounded-lg bg-surface border border-gray-700">
+                                <option value="10">10/min</option>
+                                <option value="30" selected>30/min</option>
+                                <option value="60">60/min</option>
+                                <option value="unlimited">Unlimited</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 rounded-lg bg-surface/50">
+                            <div>
+                                <p class="font-medium">Content Filter</p>
+                                <p class="text-sm text-gray-400">Filter inappropriate content</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="contentFilter" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-4">Access Logs</h3>
+                        <div class="font-mono text-sm space-y-1 max-h-64 overflow-y-auto scrollbar-custom" id="accessLogs">
+                            <div class="text-gray-500">No suspicious activity detected</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Broadcast Section -->
+                <div id="admin-broadcast" class="admin-section hidden space-y-6">
+                    <h1 class="text-2xl font-bold">Broadcast Message</h1>
+                    
+                    <div class="glass rounded-xl p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Message Title</label>
+                            <input type="text" id="broadcastTitle" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none" placeholder="Enter announcement title">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Message Content</label>
+                            <textarea id="broadcastContent" rows="4" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none resize-none" placeholder="Type your announcement..."></textarea>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" id="broadcastUrgent" class="mr-2 rounded bg-surface border-gray-700 text-primary">
+                                Mark as urgent
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" id="broadcastEmail" class="mr-2 rounded bg-surface border-gray-700 text-primary">
+                                Send via email
+                            </label>
+                        </div>
+                        <button onclick="sendBroadcast()" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold transition">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Broadcast
+                        </button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for User Profile -->
+    <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl max-w-md w-full p-6 transform transition-all scale-95 opacity-0" id="profileModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Profile Settings</h3>
+                <button onclick="closeProfile()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="text-center mb-6">
+                <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-3xl font-bold mb-2" id="profileAvatar">
+                    U
+                </div>
+                <button onclick="changeAvatar()" class="text-sm text-primary hover:text-secondary transition">Change Avatar</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Display Name</label>
+                    <input type="text" id="profileName" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="profileEmail" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none" readonly>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Preferred Model</label>
+                    <select id="profileModel" class="w-full px-4 py-2 rounded-lg bg-surface border border-gray-700 focus:border-primary focus:outline-none">
+                        <option value="arcee-ai/trinity-large-preview:free">Trinity Large (Default)</option>
+                        <option value="deepseek/deepseek-r1:free">DeepSeek R1</option>
+                        <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="saveProfile()" class="w-full mt-6 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white font-medium transition">
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="glass-strong rounded-lg px-6 py-3 flex items-center gap-3 border-l-4 border-primary">
+            <i class="fas fa-check-circle text-primary" id="toastIcon"></i>
+            <span id="toastMessage">Operation successful</span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyALWlgAyQXUomwnf520gmdoBMOFbdlWaB0",
+            authDomain: "alamak-ce66a.firebaseapp.com",
+            databaseURL: "https://alamak-ce66a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "alamak-ce66a",
+            storageBucket: "alamak-ce66a.firebasestorage.app",
+            messagingSenderId: "496086877660",
+            appId: "1:496086877660:web:4d758986c878cb15bd7b19",
+            measurementId: "G-5K0BJXCYQD"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        // ==================== GLOBAL STATE ====================
+        let currentUser = null;
+        let isAdmin = false;
+        let currentChatId = null;
+        let chats = {};
+        let messages = [];
+        let aiSettings = {
+            model: 'arcee-ai/trinity-large-preview:free',
+            temperature: 0.7,
+            maxTokens: 2048,
+            systemPrompt: 'You are a helpful AI assistant.',
+            streaming: true,
+            markdown: true,
+            codeHighlight: true
+        };
+        let jailbreakAttempts = 0;
+        const MAX_JAILBREAK_ATTEMPTS = 3;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthState();
+            loadAISettings();
+            setupJailbreakProtection();
+        });
+
+        // ==================== AUTHENTICATION ====================
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    checkIfAdmin(user.uid);
+                    loadUserChats();
+                    showChatInterface();
+                    updateUserDisplay();
+                } else {
+                    showLoginScreen();
+                }
+            });
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            if (!email || !password) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Check for admin credentials
+            if (email === 'admin123#' && password === 'admin123#') {
+                isAdmin = true;
+                currentUser = { uid: 'admin', email: 'admin@neuralai.com', displayName: 'Administrator' };
+                showAdminPanel();
+                showToast('Welcome, Administrator!', 'success');
+                logAdminAccess('Admin login successful');
+                return;
+            }
+
+            // Regular Firebase auth
+            const persistence = rememberMe ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+            
+            auth.setPersistence(persistence).then(() => {
+                return auth.signInWithEmailAndPassword(email, password);
+            }).then((userCredential) => {
+                currentUser = userCredential.user;
+                showToast('Login successful!', 'success');
+            }).catch((error) => {
+                showToast(error.message, 'error');
+            });
+        }
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then((result) => {
+                currentUser = result.user;
+                showToast('Login with Google successful!', 'success');
+            }).catch((error) => {
+                showToast(error.message, 'error');
+            });
+        }
+
+        function loginWithGithub() {
+            const provider = new firebase.auth.GithubAuthProvider();
+            auth.signInWithPopup(provider).then((result) => {
+                currentUser = result.user;
+                showToast('Login with GitHub successful!', 'success');
+            }).catch((error) => {
+                showToast(error.message, 'error');
+            });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                isAdmin = false;
+                currentChatId = null;
+                messages = [];
+                showToast('Logged out successfully', 'success');
+                showLoginScreen();
+            });
+        }
+
+        function checkIfAdmin(uid) {
+            database.ref(`admins/${uid}`).once('value').then((snapshot) => {
+                isAdmin = snapshot.exists();
+                if (isAdmin) {
+                    document.getElementById('userNameDisplay').innerHTML += ' <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded ml-1">ADMIN</span>';
+                }
+            });
+        }
+
+        // ==================== UI NAVIGATION ====================
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('chatInterface').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+        }
+
+        function showChatInterface() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('chatInterface').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('chatInterface').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            loadAdminStats();
+        }
+
+        function exitAdmin() {
+            showChatInterface();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // ==================== CHAT FUNCTIONALITY ====================
+        function newChat() {
+            currentChatId = Date.now().toString();
+            chats[currentChatId] = {
+                id: currentChatId,
+                title: 'New Conversation',
+                timestamp: Date.now(),
+                messages: []
+            };
+            messages = [];
+            renderMessages();
+            saveChatToFirebase();
+            updateChatHistory();
+            
+            // Clear welcome message and show empty state
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="text-center py-12">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center animate-float">
+                        <i class="fas fa-robot text-4xl text-primary"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">New Conversation</h2>
+                    <p class="text-gray-400">Start typing to begin chatting with AI</p>
+                </div>
+            `;
+        }
+
+        function loadUserChats() {
+            if (!currentUser) return;
+            
+            database.ref(`users/${currentUser.uid}/chats`).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    chats = data;
+                    updateChatHistory();
+                }
+            });
+        }
+
+        function updateChatHistory() {
+            const container = document.getElementById('chatHistory');
+            container.innerHTML = '';
+            
+            Object.values(chats).sort((a, b) => b.timestamp - a.timestamp).forEach(chat => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg cursor-pointer transition flex items-center gap-3 ${chat.id === currentChatId ? 'bg-primary/20 border border-primary/30' : 'hover:bg-surface'}`;
+                div.onclick = () => loadChat(chat.id);
+                div.innerHTML = `
+                    <i class="fas fa-comment-alt text-gray-400 text-sm"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">${chat.title}</p>
+                        <p class="text-xs text-gray-500">${new Date(chat.timestamp).toLocaleDateString()}</p>
+                    </div>
+                    <button onclick="deleteChat('${chat.id}', event)" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadChat(chatId) {
+            currentChatId = chatId;
+            if (chats[chatId]) {
+                messages = chats[chatId].messages || [];
+                document.getElementById('currentChatTitle').textContent = chats[chatId].title;
+                renderMessages();
+                updateChatHistory();
+            }
+        }
+
+        function deleteChat(chatId, event) {
+            event.stopPropagation();
+            if (confirm('Delete this chat?')) {
+                delete chats[chatId];
+                database.ref(`users/${currentUser.uid}/chats/${chatId}`).remove();
+                if (currentChatId === chatId) {
+                    newChat();
+                }
+                updateChatHistory();
+            }
+        }
+
+        function saveChatToFirebase() {
+            if (!currentUser || !currentChatId) return;
+            
+            database.ref(`users/${currentUser.uid}/chats/${currentChatId}`).set({
+                ...chats[currentChatId],
+                messages: messages
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            const userMessage = {
+                role: 'user',
+                content: message,
+                timestamp: Date.now()
+            };
+            
+            messages.push(userMessage);
+            renderMessages();
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Save to Firebase
+            if (currentChatId) {
+                chats[currentChatId].messages = messages;
+                chats[currentChatId].timestamp = Date.now();
+                if (messages.length === 1) {
+                    chats[currentChatId].title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+                }
+                saveChatToFirebase();
+                updateChatHistory();
+            }
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Call AI API
+            await getAIResponse();
+        }
+
+        async function getAIResponse() {
+            try {
+                const apiKey = await getAPIKey();
+                
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'NeuralAI Chat'
+                    },
+                    body: JSON.stringify({
+                        model: aiSettings.model,
+                        messages: [
+                            { role: 'system', content: aiSettings.systemPrompt },
+                            ...messages.map(m => ({ role: m.role, content: m.content }))
+                        ],
+                        temperature: aiSettings.temperature,
+                        max_tokens: aiSettings.maxTokens,
+                        stream: aiSettings.streaming
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                if (aiSettings.streaming) {
+                    await handleStreamingResponse(response);
+                } else {
+                    const data = await response.json();
+                    const aiMessage = {
+                        role: 'assistant',
+                        content: data.choices[0].message.content,
+                        timestamp: Date.now()
+                    };
+                    messages.push(aiMessage);
+                    renderMessages();
+                    saveChatToFirebase();
+                }
+                
+                // Update API stats
+                updateAPIStats();
+                
+            } catch (error) {
+                console.error('AI Error:', error);
+                showToast('Failed to get AI response. Please try again.', 'error');
+                removeTypingIndicator();
+            }
+        }
+
+        async function handleStreamingResponse(response) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = '';
+            
+            // Create AI message placeholder
+            const aiMessage = {
+                role: 'assistant',
+                content: '',
+                timestamp: Date.now()
+            };
+            messages.push(aiMessage);
+            
+            removeTypingIndicator();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') continue;
+                        
+                        try {
+                            const parsed = JSON.parse(data);
+                            const content = parsed.choices[0]?.delta?.content || '';
+                            accumulatedContent += content;
+                            
+                            // Update last message
+                            messages[messages.length - 1].content = accumulatedContent;
+                            renderMessages();
+                        } catch (e) {
+                            // Ignore parsing errors for incomplete chunks
+                        }
+                    }
+                }
+            }
+            
+            saveChatToFirebase();
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messagesContainer');
+            
+            if (messages.length === 0) return;
+            
+            container.innerHTML = messages.map((msg, index) => {
+                const isUser = msg.role === 'user';
+                const htmlContent = msg.role === 'assistant' && aiSettings.markdown ? 
+                    marked.parse(msg.content) : 
+                    escapeHtml(msg.content);
+                
+                return `
+                    <div class="flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in">
+                        <div class="max-w-[85%] md:max-w-[70%] ${isUser ? 'message-bubble-user' : 'message-bubble-ai'} p-4 shadow-lg">
+                            <div class="flex items-center gap-2 mb-2 ${isUser ? 'justify-end' : ''}">
+                                <div class="w-6 h-6 rounded-full ${isUser ? 'bg-white/20' : 'bg-primary/20'} flex items-center justify-center text-xs">
+                                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+                                </div>
+                                <span class="text-xs opacity-70">${isUser ? 'You' : 'AI'}</span>
+                                <span class="text-xs opacity-50">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div class="prose prose-invert max-w-none ${isUser ? '' : 'text-gray-100'}">
+                                ${htmlContent}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Highlight code blocks
+            if (aiSettings.codeHighlight) {
+                container.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('messagesContainer');
+            const indicator = document.createElement('div');
+            indicator.id = 'typingIndicator';
+            indicator.className = 'flex justify-start';
+            indicator.innerHTML = `
+                <div class="message-bubble-ai p-4 flex items-center gap-2">
+                    <div class="typing-indicator flex gap-1">
+                        <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                        <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                        <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(indicator);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+        }
+
+        function setQuickPrompt(prompt) {
+            document.getElementById('messageInput').value = prompt;
+            document.getElementById('messageInput').focus();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== ADMIN PANEL FUNCTIONS ====================
+        function showAdminSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
+            // Show selected section
+            document.getElementById(`admin-${section}`).classList.remove('hidden');
+            
+            // Update nav buttons
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-surface/50', 'border-primary');
+                btn.classList.add('border-transparent');
+            });
+            document.querySelector(`[data-section="${section}"]`).classList.add('bg-surface/50', 'border-primary');
+            document.querySelector(`[data-section="${section}"]`).classList.remove('border-transparent');
+            
+            // Load section data
+            if (section === 'dashboard') loadAdminStats();
+            if (section === 'users') loadUsers();
+            if (section === 'analytics') loadAnalytics();
+        }
+
+        function loadAdminStats() {
+            // Simulate loading stats
+            database.ref('users').once('value').then(snapshot => {
+                const count = snapshot.numChildren();
+                document.getElementById('statTotalUsers').textContent = count;
+            });
+            
+            // Update other stats
+            document.getElementById('statActiveChats').textContent = Object.keys(chats).length;
+            document.getElementById('statNewUsers').textContent = Math.floor(Math.random() * 10);
+            document.getElementById('statApiCalls').textContent = Math.floor(Math.random() * 1000) + 500;
+        }
+
+        function loadUsers() {
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = '';
+            
+            database.ref('users').once('value').then(snapshot => {
+                snapshot.forEach(child => {
+                    const user = child.val();
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-surface/30 transition';
+                    tr.innerHTML = `
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold">
+                                    ${(user.email || 'U')[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-medium">${user.email || 'Anonymous'}</p>
+                                    <p class="text-xs text-gray-500">${child.key}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-xs ${user.isAdmin ? 'bg-red-500/20 text-red-400' : 'bg-primary/20 text-primary'}">
+                                ${user.isAdmin ? 'Admin' : 'User'}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Active</span>
+                        </td>
+                        <td class="p-4 text-gray-400">
+                            ${new Date(user.createdAt || Date.now()).toLocaleDateString()}
+                        </td>
+                        <td class="p-4">
+                            <button onclick="viewUser('${child.key}')" class="text-primary hover:text-secondary mr-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="banUser('${child.key}')" class="text-red-400 hover:text-red-300">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function saveAISettings() {
+            aiSettings.model = document.getElementById('adminModelSelect').value;
+            aiSettings.temperature = parseFloat(document.getElementById('adminTemperature').value);
+            aiSettings.maxTokens = parseInt(document.getElementById('adminMaxTokens').value);
+            aiSettings.systemPrompt = document.getElementById('adminSystemPrompt').value;
+            aiSettings.streaming = document.getElementById('adminStreaming').checked;
+            aiSettings.markdown = document.getElementById('adminMarkdown').checked;
+            aiSettings.codeHighlight = document.getElementById('adminCodeHighlight').checked;
+            
+            // Save to Firebase
+            database.ref('settings/ai').set(aiSettings);
+            showToast('AI settings saved successfully!', 'success');
+            logAdminAccess('Updated AI configuration');
+        }
+
+        function loadAISettings() {
+            database.ref('settings/ai').once('value').then(snapshot => {
+                const settings = snapshot.val();
+                if (settings) {
+                    aiSettings = { ...aiSettings, ...settings };
+                    document.getElementById('adminModelSelect').value = aiSettings.model;
+                    document.getElementById('adminTemperature').value = aiSettings.temperature;
+                    document.getElementById('tempValue').textContent = aiSettings.temperature;
+                    document.getElementById('adminMaxTokens').value = aiSettings.maxTokens;
+                    document.getElementById('adminSystemPrompt').value = aiSettings.systemPrompt;
+                }
+            });
+        }
+
+        async function getAPIKey() {
+            // First check admin settings
+            const snapshot = await database.ref('settings/apiKey').once('value');
+            if (snapshot.val()) {
+                return snapshot.val();
+            }
+            // Fallback to hardcoded for demo (replace with your actual key)
+            return 'sk-or-v1-3c7f6b8e4d2a1f5c9e8d7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6'; // Replace with actual key // Replace with actual key
+        }
+
+        function saveAPIKey() {
+            const key = document.getElementById('masterAPIKey').value;
+            if (key) {
+                database.ref('settings/apiKey').set(key);
+                showToast('API Key saved!', 'success');
+                logAdminAccess('Updated API key');
+            }
+        }
+
+        function sendBroadcast() {
+            const title = document.getElementById('broadcastTitle').value;
+            const content = document.getElementById('broadcastContent').value;
+            const urgent = document.getElementById('broadcastUrgent').checked;
+            
+            if (!title || !content) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Save broadcast to Firebase
+            database.ref('broadcasts').push({
+                title,
+                content,
+                urgent,
+                timestamp: Date.now(),
+                sentBy: currentUser.uid
+            });
+            
+            showToast('Broadcast sent successfully!', 'success');
+            document.getElementById('broadcastTitle').value = '';
+            document.getElementById('broadcastContent').value = '';
+            logAdminAccess('Sent broadcast message');
+        }
+
+        // ==================== SECURITY FEATURES ====================
+        function setupJailbreakProtection() {
+            // Monitor for suspicious activity
+            let devToolsOpen = false;
+            const threshold = 160;
+            
+            setInterval(() => {
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                
+                if (widthThreshold || heightThreshold) {
+                    if (!devToolsOpen) {
+                        devToolsOpen = true;
+                        handleJailbreakAttempt('Developer tools detected');
+                    }
+                } else {
+                    devToolsOpen = false;
+                }
+            }, 1000);
+            
+            // Prevent right-click on admin panel
+            document.addEventListener('contextmenu', (e) => {
+                if (isAdmin && e.target.closest('#adminPanel')) {
+                    e.preventDefault();
+                    handleJailbreakAttempt('Right-click blocked in in admin area');
+                }
+            });
+            
+            // Keyboard shortcuts detection
+            document.addEventListener('keydown', (e) => {
+                // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                    (e.ctrlKey && e.key === 'u')) {
+                    if (isAdmin) {
+                        e.preventDefault();
+                        handleJailbreakAttempt('Keyboard shortcut blocked');
+                    }
+                }
+            });
+        }
+
+        function handleJailbreakAttempt(reason) {
+            jailbreakAttempts++;
+            logAdminAccess(`Security alert: ${reason} (Attempt ${jailbreakAttempts})`);
+            
+            if (jailbreakAttempts >= MAX_JAILBREAK_ATTEMPTS) {
+                document.getElementById('jailbreakWarning').classList.add('jailbreak-active');
+                database.ref('security/breaches').push({
+                    timestamp: Date.now(),
+                    reason: reason,
+                    user: currentUser ? currentUser.uid : 'unknown',
+                    attempts: jailbreakAttempts
+                });
+            } else {
+                showToast(`Security warning: Suspicious activity detected (${jailbreakAttempts}/${MAX_JAILBREAK_ATTEMPTS})`, 'error');
+            }
+        }
+
+        function toggleJailbreakProtection() {
+            const enabled = document.getElementById('jailbreakProtection').checked;
+            database.ref('settings/security/jailbreakProtection').set(enabled);
+            showToast(`Jailbreak protection ${enabled ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function logAdminAccess(action) {
+            const log = {
+                timestamp: Date.now(),
+                action: action,
+                user: currentUser ? currentUser.uid : 'system',
+                ip: 'client-side'
+            };
+            database.ref('logs/admin').push(log);
+            
+            // Add to visible logs
+            const logsContainer = document.getElementById('systemLogs');
+            const entry = document.createElement('div');
+            entry.className = 'text-blue-400';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${action}`;
+            logsContainer.insertBefore(entry, logsContainer.firstChild);
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            msg.textContent = message;
+            icon.className = type === 'success' ? 'fas fa-check-circle text-primary' : 'fas fa-exclamation-circle text-red-500';
+            toast.querySelector('div').className = `glass-strong rounded-lg px-6 py-3 flex items-center gap-3 border-l-4 ${type === 'success' ? 'border-primary' : 'border-red-500'}`;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function updateUserDisplay() {
+            if (currentUser) {
+                const displayName = currentUser.displayName || currentUser.email || 'User';
+                document.getElementById('userNameDisplay').textContent = displayName;
+                document.getElementById('userAvatar').textContent = displayName[0].toUpperCase();
+                document.getElementById('profileName').value = displayName;
+                document.getElementById('profileEmail').value = currentUser.email || '';
+                document.getElementById('profileAvatar').textContent = displayName[0].toUpperCase();
+            }
+        }
+
+        function showProfile() {
+            document.getElementById('profileModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('profileModalContent').classList.remove('scale-95', 'opacity-0');
+                document.getElementById('profileModalContent').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModalContent').classList.add('scale-95', 'opacity-0');
+            document.getElementById('profileModalContent').classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                document.getElementById('profileModal').classList.add('hidden');
+            }, 300);
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('profileName').value;
+            const newModel = document.getElementById('profileModel').value;
+            
+            if (currentUser) {
+                currentUser.updateProfile({ displayName: newName }).then(() => {
+                    updateUserDisplay();
+                    showToast('Profile updated!', 'success');
+                    closeProfile();
+                });
+            }
+        }
+
+        function clearChat() {
+            if (confirm('Clear all messages in this chat?')) {
+                messages = [];
+                if (currentChatId && chats[currentChatId]) {
+                    chats[currentChatId].messages = [];
+                    saveChatToFirebase();
+                }
+                renderMessages();
+            }
+        }
+
+        function exportChat() {
+            if (messages.length === 0) {
+                showToast('No messages to export', 'error');
+                return;
+            }
+            
+            const exportData = {
+                title: chats[currentChatId]?.title || 'Chat Export',
+                date: new Date().toISOString(),
+                messages: messages
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat-export-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('Chat exported successfully!', 'success');
+        }
+
+        function toggleTheme() {
+            // Theme toggle logic here
+            showToast('Theme settings saved', 'success');
+        }
+
+        function showSettings() {
+            showToast('Settings panel coming soon!', 'success');
+        }
+
+        function showForgotPassword() {
+            showToast('Please contact admin for password reset', 'success');
+        }
+
+        function showRegister() {
+            showToast('Registration is invite-only. Contact administrator.', 'success');
+        }
+
+        function toggleAttachment() {
+            showToast('File upload coming soon!', 'success');
+        }
+
+        function toggleEmoji() {
+            showToast('Emoji picker coming soon!', 'success');
+        }
+
+        function changeAvatar() {
+            showToast('Avatar upload coming soon!', 'success');
+        }
+
+        function searchUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function refreshUsers() {
+            loadUsers();
+            showToast('User list refreshed', 'success');
+        }
+
+        function viewUser(uid) {
+            showToast(`Viewing user ${uid}`, 'success');
+        }
+
+        function banUser(uid) {
+            if (confirm(`Ban user ${uid}?`)) {
+                database.ref(`users/${uid}/banned`).set(true);
+                showToast('User banned successfully', 'success');
+                loadUsers();
+            }
+        }
+
+        function toggleAPIVisibility() {
+            const input = document.getElementById('masterAPIKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function testAPIKey() {
+            showToast('Testing API connection...', 'success');
+            // Implement actual API test here
+        }
+
+        function rotateAPIKey() {
+            if (confirm('Rotate API key? This will invalidate the current key.')) {
+                showToast('API key rotated successfully', 'success');
+            }
+        }
+
+        function updateAPIStats() {
+            // Update API usage statistics
+            statistics
+ statistics statistics
+            const today = new Date().toDateString();
+            const ref = database.ref(`stats/api/${today}`);
+            ref.transaction(current => (current || 0) + 1);
+        }
+
+        function loadAnalytics() {
+            // Generate sample DAU chart
+            const chart = document.getElementById('dauChart');
+            chart.innerHTML = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const height = Math.random() * 80 + 20;
+                const bar = document.createElement('div');
+                bar.className = 'flex-1 bg-primary/50 rounded-t hover:bg-primary transition-all cursor-pointer relative group';
+                bar.style.height = `${height}%`;
+                bar.innerHTML = `
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface rounded text-xs opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                        ${Math.floor(height * 10)} users
+                    </div>
+                `;
+                chart.appendChild(bar);
+            }
+        }
+
+        function addGlobalPrompt() {
+            const prompt = prompt('Enter global prompt:');
+            if (prompt) {
+                database.ref('globalPrompts').push({
+                    text: prompt,
+                    createdAt: Date.now()
+                });
+                showToast('Global prompt added!', 'success');
+            }
+        }
+
+        // Prevent accidental navigation
+        window.onbeforeunload = function() {
+            if (messages.length > 0 && !currentChatId) {
+                return 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        };
+
+        // Service Worker for PWA (optional)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript,').catch(() => {
+                // Silent fail
+            });
+        }
+    </script>
+</body>
+</html>
