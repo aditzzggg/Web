@@ -1,0 +1,3587 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexusAI — Intelligent Chat Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root {
+  --bg-primary: #07070f;
+  --bg-secondary: #0d0d1a;
+  --bg-card: #111127;
+  --bg-input: #0a0a1f;
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0,212,255,0.15);
+  --cyan-glow: rgba(0,212,255,0.4);
+  --purple: #7b2fff;
+  --purple-dim: rgba(123,47,255,0.15);
+  --pink: #ff2d7e;
+  --green: #00ff88;
+  --yellow: #ffcc00;
+  --red: #ff3355;
+  --text-primary: #e8eaf6;
+  --text-secondary: #8892b0;
+  --text-dim: #4a5568;
+  --border: rgba(0,212,255,0.12);
+  --border-bright: rgba(0,212,255,0.35);
+  --shadow: 0 0 30px rgba(0,212,255,0.08);
+  --shadow-strong: 0 0 50px rgba(123,47,255,0.2);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  font-size:15px;
+  font-weight:400;
+}
+
+/* ═══════════════ SCROLLBAR ═══════════════ */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--cyan-dim); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:var(--cyan); }
+
+/* ═══════════════ NOISE OVERLAY ═══════════════ */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+  opacity:0.6;
+}
+
+/* ═══════════════ SCREENS ═══════════════ */
+.screen { display:none; width:100%; height:100%; }
+.screen.active { display:flex; }
+
+/* ═══════════════ LOGIN SCREEN ═══════════════ */
+#loginScreen {
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0,212,255,0.08) 0%, transparent 50%),
+              var(--bg-primary);
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+.login-grid {
+  position:absolute;
+  inset:0;
+  background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size:60px 60px;
+  animation:gridMove 20s linear infinite;
+}
+@keyframes gridMove { from{transform:translateY(0)} to{transform:translateY(60px)} }
+.login-particles {
+  position:absolute; inset:0; overflow:hidden;
+}
+.particle {
+  position:absolute;
+  width:2px; height:2px;
+  background:var(--cyan);
+  border-radius:50%;
+  animation:float linear infinite;
+}
+@keyframes float {
+  0% { transform:translateY(100vh) translateX(0); opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:0.5; }
+  100% { transform:translateY(-10px) translateX(var(--dx,20px)); opacity:0; }
+}
+.login-box {
+  position:relative;
+  z-index:10;
+  background:rgba(13,13,26,0.92);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:48px 44px;
+  width:420px;
+  max-width:95vw;
+  backdrop-filter:blur(20px);
+  box-shadow: 0 0 0 1px rgba(0,212,255,0.05),
+              0 20px 60px rgba(0,0,0,0.5),
+              inset 0 1px 0 rgba(0,212,255,0.08);
+  animation:fadeInUp 0.6s ease;
+}
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(30px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.login-logo {
+  text-align:center;
+  margin-bottom:32px;
+}
+.login-logo .logo-icon {
+  width:64px; height:64px;
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  border-radius:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  margin-bottom:16px;
+  box-shadow:0 0 30px rgba(123,47,255,0.4);
+}
+.login-logo h1 {
+  font-family:'Orbitron',monospace;
+  font-size:22px;
+  font-weight:800;
+  background:linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:3px;
+}
+.login-logo p { color:var(--text-secondary); font-size:13px; margin-top:4px; letter-spacing:1px; }
+.tab-switch {
+  display:flex;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:3px;
+  margin-bottom:24px;
+}
+.tab-switch button {
+  flex:1;
+  padding:9px;
+  border:none;
+  background:transparent;
+  color:var(--text-secondary);
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:1px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .25s;
+}
+.tab-switch button.active {
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  color:white;
+  box-shadow:0 0 15px rgba(123,47,255,0.3);
+}
+.form-group { margin-bottom:16px; }
+.form-group label {
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1.5px;
+  color:var(--text-secondary);
+  margin-bottom:7px;
+  text-transform:uppercase;
+}
+.form-group .input-wrap {
+  position:relative;
+}
+.form-group .input-wrap i {
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--text-dim);
+  font-size:14px;
+  transition:color .2s;
+}
+.form-group input {
+  width:100%;
+  padding:12px 14px 12px 40px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text-primary);
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;
+  font-weight:500;
+  outline:none;
+  transition:all .25s;
+}
+.form-group input:focus {
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px var(--cyan-dim);
+  background:rgba(0,212,255,0.03);
+}
+.form-group input:focus + i,
+.form-group .input-wrap:focus-within i { color:var(--cyan); }
+.form-group input::placeholder { color:var(--text-dim); }
+.btn-primary {
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  border:none;
+  border-radius:10px;
+  color:white;
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .25s;
+  position:relative;
+  overflow:hidden;
+  margin-top:8px;
+}
+.btn-primary:hover {
+  transform:translateY(-2px);
+  box-shadow:0 8px 25px rgba(123,47,255,0.4);
+}
+.btn-primary:active { transform:translateY(0); }
+.btn-primary::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity:0;
+  transition:opacity .2s;
+}
+.btn-primary:hover::after { opacity:1; }
+.login-err {
+  background:rgba(255,51,85,0.12);
+  border:1px solid rgba(255,51,85,0.3);
+  border-radius:8px;
+  padding:10px 14px;
+  color:var(--red);
+  font-size:13px;
+  margin-bottom:14px;
+  display:none;
+}
+.login-err.show { display:block; }
+
+/* ═══════════════ MAIN CHAT SCREEN ═══════════════ */
+#chatScreen {
+  flex-direction:row;
+  height:100%;
+}
+.sidebar {
+  width:270px;
+  min-width:270px;
+  background:var(--bg-secondary);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  position:relative;
+  z-index:10;
+}
+.sidebar-header {
+  padding:20px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.sidebar-logo {
+  font-family:'Orbitron',monospace;
+  font-size:16px;
+  font-weight:800;
+  background:linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:2px;
+}
+.sidebar-logo-icon {
+  width:36px; height:36px;
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+}
+.new-chat-btn {
+  margin:14px;
+  padding:11px 14px;
+  background:var(--cyan-dim);
+  border:1px solid var(--border-bright);
+  border-radius:10px;
+  color:var(--cyan);
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:all .2s;
+}
+.new-chat-btn:hover { background:rgba(0,212,255,0.2); transform:translateY(-1px); }
+.chat-list {
+  flex:1;
+  overflow-y:auto;
+  padding:8px;
+}
+.chat-item {
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:2px;
+  transition:all .2s;
+  border:1px solid transparent;
+  position:relative;
+}
+.chat-item:hover, .chat-item.active {
+  background:var(--cyan-dim);
+  border-color:var(--border);
+}
+.chat-item.active { border-color:var(--border-bright); }
+.chat-item-icon {
+  color:var(--text-secondary);
+  font-size:13px;
+  flex-shrink:0;
+}
+.chat-item-text {
+  flex:1;
+  overflow:hidden;
+}
+.chat-item-title {
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-primary);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.chat-item-date {
+  font-size:11px;
+  color:var(--text-dim);
+  margin-top:2px;
+}
+.chat-item-del {
+  background:none;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  padding:4px;
+  border-radius:5px;
+  font-size:12px;
+  opacity:0;
+  transition:all .2s;
+}
+.chat-item:hover .chat-item-del { opacity:1; }
+.chat-item-del:hover { color:var(--red); background:rgba(255,51,85,0.1); }
+.sidebar-footer {
+  border-top:1px solid var(--border);
+  padding:12px;
+}
+.user-info-btn {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:all .2s;
+  border:none;
+  background:transparent;
+  width:100%;
+  text-align:left;
+  color:var(--text-primary);
+}
+.user-info-btn:hover { background:var(--cyan-dim); }
+.user-avatar {
+  width:36px; height:36px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  font-weight:700;
+  font-family:'Orbitron',monospace;
+  flex-shrink:0;
+}
+.user-name { font-size:13px; font-weight:600; color:var(--text-primary); }
+.user-role { font-size:11px; color:var(--text-dim); }
+/* ═══════════════ CHAT MAIN ═══════════════ */
+.chat-main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+.chat-topbar {
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  gap:12px;
+  background:var(--bg-secondary);
+  flex-shrink:0;
+}
+.chat-topbar-title {
+  flex:1;
+  font-family:'Orbitron',monospace;
+  font-size:13px;
+  font-weight:600;
+  color:var(--cyan);
+  letter-spacing:1px;
+}
+.topbar-btn {
+  width:36px; height:36px;
+  border-radius:9px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text-secondary);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  transition:all .2s;
+}
+.topbar-btn:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+.chat-messages {
+  flex:1;
+  overflow-y:auto;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.chat-welcome {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  text-align:center;
+  padding:40px;
+}
+.chat-welcome .welcome-icon {
+  width:80px; height:80px;
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  margin-bottom:20px;
+  box-shadow:0 0 40px rgba(123,47,255,0.3);
+  animation:pulseGlow 3s ease infinite;
+}
+@keyframes pulseGlow {
+  0%,100%{box-shadow:0 0 40px rgba(123,47,255,0.3);}
+  50%{box-shadow:0 0 60px rgba(0,212,255,0.4);}
+}
+.chat-welcome h2 {
+  font-family:'Orbitron',monospace;
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:8px;
+  background:linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.chat-welcome p { color:var(--text-secondary); font-size:15px; max-width:400px; line-height:1.6; }
+.chat-welcome .suggestions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+  margin-top:24px;
+}
+.suggestion-btn {
+  padding:9px 16px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  color:var(--text-secondary);
+  font-family:'Rajdhani',sans-serif;
+  font-size:13px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.suggestion-btn:hover {
+  border-color:var(--cyan);
+  color:var(--cyan);
+  background:var(--cyan-dim);
+  transform:translateY(-1px);
+}
+.message-row {
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  animation:msgIn 0.35s ease;
+}
+@keyframes msgIn {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.message-row.user { flex-direction:row-reverse; }
+.msg-avatar {
+  width:34px; height:34px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:700;
+  flex-shrink:0;
+  font-family:'Orbitron',monospace;
+}
+.msg-avatar.ai {
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  box-shadow:0 0 12px rgba(123,47,255,0.3);
+}
+.msg-avatar.user-msg {
+  background:linear-gradient(135deg, var(--pink), var(--purple));
+}
+.msg-bubble {
+  max-width:75%;
+  padding:13px 16px;
+  border-radius:14px;
+  font-size:14.5px;
+  line-height:1.65;
+  position:relative;
+}
+.message-row.ai .msg-bubble {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-top-left-radius:4px;
+  color:var(--text-primary);
+}
+.message-row.user .msg-bubble {
+  background:linear-gradient(135deg, rgba(123,47,255,0.35), rgba(0,212,255,0.2));
+  border:1px solid rgba(123,47,255,0.3);
+  border-top-right-radius:4px;
+  color:var(--text-primary);
+}
+.msg-meta {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+}
+.msg-time {
+  font-size:11px;
+  color:var(--text-dim);
+}
+.msg-copy {
+  background:none;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:4px;
+  transition:all .2s;
+  opacity:0;
+}
+.msg-bubble:hover .msg-copy { opacity:1; }
+.msg-copy:hover { color:var(--cyan); background:var(--cyan-dim); }
+.typing-indicator {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:12px 16px;
+}
+.typing-dot {
+  width:7px; height:7px;
+  background:var(--cyan);
+  border-radius:50%;
+  animation:typingBounce 1.2s ease infinite;
+}
+.typing-dot:nth-child(2) { animation-delay:.2s; }
+.typing-dot:nth-child(3) { animation-delay:.4s; }
+@keyframes typingBounce {
+  0%,60%,100% { transform:translateY(0); opacity:0.4; }
+  30% { transform:translateY(-8px); opacity:1; }
+}
+/* code blocks in messages */
+.msg-bubble pre {
+  background:rgba(0,0,0,0.4);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  overflow-x:auto;
+  margin:8px 0;
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;
+}
+.msg-bubble code {
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;
+  background:rgba(0,212,255,0.1);
+  padding:2px 6px;
+  border-radius:4px;
+  color:var(--cyan);
+}
+.msg-bubble pre code { background:none; padding:0; }
+.chat-input-area {
+  border-top:1px solid var(--border);
+  padding:16px 20px;
+  background:var(--bg-secondary);
+  flex-shrink:0;
+}
+.chat-input-wrap {
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:8px 8px 8px 16px;
+  transition:border-color .2s;
+}
+.chat-input-wrap:focus-within {
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px var(--cyan-dim);
+}
+.chat-input-wrap textarea {
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text-primary);
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;
+  font-weight:400;
+  resize:none;
+  max-height:140px;
+  line-height:1.5;
+  padding:4px 0;
+}
+.chat-input-wrap textarea::placeholder { color:var(--text-dim); }
+.send-btn {
+  width:40px; height:40px;
+  border-radius:10px;
+  background:linear-gradient(135deg, var(--purple), var(--cyan));
+  border:none;
+  color:white;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  transition:all .2s;
+  flex-shrink:0;
+}
+.send-btn:hover { transform:scale(1.05); box-shadow:0 0 15px rgba(123,47,255,0.4); }
+.send-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+.char-count {
+  font-size:11px;
+  color:var(--text-dim);
+  text-align:right;
+  margin-top:6px;
+}
+.jailbreak-warn {
+  background:rgba(255,51,85,0.1);
+  border:1px solid rgba(255,51,85,0.3);
+  border-radius:10px;
+  padding:10px 14px;
+  color:var(--red);
+  font-size:13px;
+  margin-bottom:10px;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.jailbreak-warn.show { display:flex; }
+/* announcement banner */
+.announcement-bar {
+  background:linear-gradient(90deg, rgba(123,47,255,0.2), rgba(0,212,255,0.1));
+  border-bottom:1px solid var(--border);
+  padding:8px 20px;
+  font-size:13px;
+  color:var(--cyan);
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.announcement-bar.show { display:flex; }
+.announcement-close { margin-left:auto; cursor:pointer; color:var(--text-dim); }
+
+/* ═══════════════ ADMIN PANEL ═══════════════ */
+#adminScreen {
+  flex-direction:row;
+  height:100%;
+}
+.admin-sidebar {
+  width:240px;
+  min-width:240px;
+  background:var(--bg-secondary);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.admin-logo {
+  padding:20px 18px;
+  border-bottom:1px solid var(--border);
+}
+.admin-logo-text {
+  font-family:'Orbitron',monospace;
+  font-size:13px;
+  font-weight:800;
+  color:var(--red);
+  letter-spacing:2px;
+}
+.admin-logo-sub { font-size:11px; color:var(--text-dim); margin-top:2px; letter-spacing:1px; }
+.admin-nav { flex:1; padding:8px; overflow-y:auto; }
+.admin-nav-item {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:9px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  color:var(--text-secondary);
+  transition:all .2s;
+  border:1px solid transparent;
+  margin-bottom:2px;
+  white-space:nowrap;
+}
+.admin-nav-item i { width:16px; text-align:center; font-size:13px; }
+.admin-nav-item:hover { background:var(--cyan-dim); color:var(--cyan); }
+.admin-nav-item.active {
+  background:rgba(255,51,85,0.1);
+  color:var(--red);
+  border-color:rgba(255,51,85,0.2);
+}
+.admin-nav-section {
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  padding:12px 12px 4px;
+  text-transform:uppercase;
+}
+.admin-nav-item .badge {
+  margin-left:auto;
+  background:var(--red);
+  color:white;
+  font-size:10px;
+  padding:2px 7px;
+  border-radius:20px;
+}
+.admin-footer {
+  border-top:1px solid var(--border);
+  padding:12px;
+}
+.admin-main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+.admin-topbar {
+  height:60px;
+  background:var(--bg-secondary);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 24px;
+  gap:12px;
+  flex-shrink:0;
+}
+.admin-topbar-title {
+  font-family:'Orbitron',monospace;
+  font-size:14px;
+  font-weight:700;
+  color:var(--red);
+  letter-spacing:2px;
+  flex:1;
+}
+.admin-content {
+  flex:1;
+  overflow-y:auto;
+  padding:24px;
+}
+.admin-panel { display:none; }
+.admin-panel.active { display:block; }
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:16px;
+  margin-bottom:28px;
+}
+.stat-card {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+  transition:all .2s;
+}
+.stat-card:hover { border-color:var(--border-bright); transform:translateY(-2px); }
+.stat-card::before {
+  content:'';
+  position:absolute;
+  top:0; right:0;
+  width:80px; height:80px;
+  border-radius:50%;
+  opacity:0.08;
+}
+.stat-card.cyan::before { background:var(--cyan); }
+.stat-card.purple::before { background:var(--purple); }
+.stat-card.green::before { background:var(--green); }
+.stat-card.red::before { background:var(--red); }
+.stat-card.yellow::before { background:var(--yellow); }
+.stat-value {
+  font-family:'Orbitron',monospace;
+  font-size:26px;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.stat-card.cyan .stat-value { color:var(--cyan); }
+.stat-card.purple .stat-value { color:var(--purple); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.red .stat-value { color:var(--red); }
+.stat-card.yellow .stat-value { color:var(--yellow); }
+.stat-label { font-size:12px; color:var(--text-secondary); font-weight:600; letter-spacing:1px; }
+.stat-icon {
+  position:absolute;
+  top:16px; right:16px;
+  font-size:20px;
+  opacity:0.4;
+}
+.section-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.section-title {
+  font-family:'Orbitron',monospace;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text-secondary);
+  text-transform:uppercase;
+}
+.card {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:20px;
+}
+.card-title {
+  font-family:'Orbitron',monospace;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text-secondary);
+  margin-bottom:16px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.card-title i { color:var(--cyan); }
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+table th {
+  text-align:left;
+  padding:10px 14px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  border-bottom:1px solid var(--border);
+}
+table td {
+  padding:12px 14px;
+  font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--text-primary);
+}
+table tr:hover td { background:rgba(0,212,255,0.02); }
+.badge-role {
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+}
+.badge-role.admin { background:rgba(255,51,85,0.15); color:var(--red); }
+.badge-role.user { background:rgba(0,212,255,0.1); color:var(--cyan); }
+.badge-role.banned { background:rgba(255,204,0,0.1); color:var(--yellow); }
+.action-btn {
+  padding:5px 12px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+  font-family:'Rajdhani',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  transition:all .2s;
+  margin-right:4px;
+}
+.action-btn.ban { background:rgba(255,204,0,0.15); color:var(--yellow); border:1px solid rgba(255,204,0,0.2); }
+.action-btn.ban:hover { background:rgba(255,204,0,0.25); }
+.action-btn.del { background:rgba(255,51,85,0.12); color:var(--red); border:1px solid rgba(255,51,85,0.2); }
+.action-btn.del:hover { background:rgba(255,51,85,0.22); }
+.action-btn.view { background:rgba(0,212,255,0.1); color:var(--cyan); border:1px solid var(--border); }
+.action-btn.view:hover { background:rgba(0,212,255,0.2); }
+.action-btn.green { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.2); }
+.action-btn.green:hover { background:rgba(0,255,136,0.2); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-row.single { grid-template-columns:1fr; }
+.admin-input-group { margin-bottom:14px; }
+.admin-input-group label {
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-bottom:7px;
+}
+.admin-input-group input,
+.admin-input-group select,
+.admin-input-group textarea {
+  width:100%;
+  padding:11px 14px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:9px;
+  color:var(--text-primary);
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+  font-weight:500;
+  outline:none;
+  transition:all .2s;
+}
+.admin-input-group input:focus,
+.admin-input-group select:focus,
+.admin-input-group textarea:focus {
+  border-color:var(--red);
+  box-shadow:0 0 0 3px rgba(255,51,85,0.1);
+}
+.admin-input-group textarea { resize:vertical; min-height:100px; }
+.admin-input-group select { appearance:none; }
+.admin-save-btn {
+  padding:10px 24px;
+  background:linear-gradient(135deg, var(--red), var(--purple));
+  border:none;
+  border-radius:9px;
+  color:white;
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+}
+.admin-save-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(255,51,85,0.3); }
+.toggle-switch {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.toggle-switch label { font-size:13px; color:var(--text-primary); }
+.toggle {
+  width:42px; height:22px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:11px;
+  cursor:pointer;
+  position:relative;
+  transition:all .25s;
+  flex-shrink:0;
+}
+.toggle::after {
+  content:'';
+  position:absolute;
+  top:2px; left:2px;
+  width:16px; height:16px;
+  background:var(--text-dim);
+  border-radius:50%;
+  transition:all .25s;
+}
+.toggle.on { background:rgba(0,255,136,0.2); border-color:var(--green); }
+.toggle.on::after { transform:translateX(20px); background:var(--green); box-shadow:0 0 8px var(--green); }
+.alert-msg {
+  padding:10px 14px;
+  border-radius:8px;
+  font-size:13px;
+  margin-top:10px;
+  display:none;
+}
+.alert-msg.success { background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.2); color:var(--green); display:block; }
+.alert-msg.error { background:rgba(255,51,85,0.1); border:1px solid rgba(255,51,85,0.2); color:var(--red); display:block; }
+.log-entry {
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.log-entry .log-time { color:var(--text-dim); font-size:11px; white-space:nowrap; font-family:'Share Tech Mono',monospace; }
+.log-entry .log-icon { font-size:13px; width:20px; flex-shrink:0; }
+.log-entry .log-msg { color:var(--text-primary); flex:1; }
+.blacklist-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.blacklist-tag {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  background:rgba(255,51,85,0.1);
+  border:1px solid rgba(255,51,85,0.2);
+  border-radius:20px;
+  font-size:12px;
+  color:var(--red);
+}
+.blacklist-tag button {
+  background:none;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  font-size:11px;
+  line-height:1;
+  padding:0;
+}
+.blacklist-tag button:hover { color:var(--red); }
+/* announcement list */
+.ann-item {
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:12px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:9px;
+  margin-bottom:8px;
+}
+.ann-msg { flex:1; font-size:13px; color:var(--text-primary); }
+.ann-date { font-size:11px; color:var(--text-dim); }
+/* model cards */
+.model-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:12px;
+  margin-top:12px;
+}
+.model-card {
+  padding:14px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:10px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.model-card:hover, .model-card.selected {
+  border-color:var(--cyan);
+  background:var(--cyan-dim);
+}
+.model-card.selected .model-name { color:var(--cyan); }
+.model-name { font-size:13px; font-weight:600; margin-bottom:4px; }
+.model-desc { font-size:11px; color:var(--text-dim); }
+/* chat monitor */
+.chat-monitor-user {
+  padding:12px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:9px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.chat-monitor-user:hover { border-color:var(--cyan); }
+/* modal */
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:28px;
+  width:500px;
+  max-width:95vw;
+  max-height:80vh;
+  overflow-y:auto;
+  animation:fadeInUp .3s ease;
+}
+.modal-title {
+  font-family:'Orbitron',monospace;
+  font-size:15px;
+  font-weight:700;
+  color:var(--cyan);
+  margin-bottom:20px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.modal-close {
+  margin-left:auto;
+  background:none;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  font-size:18px;
+}
+.modal-close:hover { color:var(--text-primary); }
+
+/* profile/settings modal */
+.profile-avatar-preview {
+  width:60px; height:60px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  font-weight:700;
+  font-family:'Orbitron',monospace;
+  margin:0 auto 16px;
+}
+.color-swatches {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.color-swatch {
+  width:28px; height:28px;
+  border-radius:7px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all .2s;
+}
+.color-swatch.selected { border-color:white; transform:scale(1.15); }
+
+/* toast notification */
+.toast {
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 18px;
+  font-size:13px;
+  z-index:9998;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  transform:translateX(120%);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  max-width:350px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.toast.show { transform:translateX(0); }
+.toast.success { border-color:rgba(0,255,136,0.3); }
+.toast.success i { color:var(--green); }
+.toast.error { border-color:rgba(255,51,85,0.3); }
+.toast.error i { color:var(--red); }
+.toast.info { border-color:var(--border-bright); }
+.toast.info i { color:var(--cyan); }
+
+/* maintenance mode overlay */
+.maintenance-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(7,7,15,0.95);
+  z-index:9990;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:16px;
+}
+.maintenance-overlay.show { display:flex; }
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media(max-width:768px) {
+  .sidebar { width:200px; min-width:200px; }
+  .admin-sidebar { width:200px; min-width:200px; }
+  .form-row { grid-template-columns:1fr; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:600px) {
+  .sidebar { position:absolute; left:-270px; z-index:100; transition:left .3s; }
+  .sidebar.open { left:0; }
+  .admin-sidebar { display:none; }
+  .stats-grid { grid-template-columns:1fr; }
+}
+
+/* Loading Spinner */
+.spinner {
+  width:20px; height:20px;
+  border:2px solid rgba(255,255,255,0.1);
+  border-top-color:var(--cyan);
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  display:inline-block;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Range input */
+input[type=range] {
+  -webkit-appearance:none;
+  width:100%;
+  height:4px;
+  background:var(--bg-input);
+  border-radius:2px;
+  outline:none;
+  margin:8px 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:16px; height:16px;
+  background:var(--cyan);
+  border-radius:50%;
+  cursor:pointer;
+}
+.range-val { font-family:'Share Tech Mono',monospace; color:var(--cyan); font-size:13px; }
+
+/* Status indicators */
+.status-dot {
+  width:7px; height:7px;
+  border-radius:50%;
+  display:inline-block;
+  margin-right:5px;
+}
+.status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); }
+.status-dot.offline { background:var(--text-dim); }
+.status-dot.banned { background:var(--yellow); }
+
+/* Export btn */
+.export-btn {
+  padding:8px 16px;
+  background:rgba(0,255,136,0.1);
+  border:1px solid rgba(0,255,136,0.2);
+  border-radius:8px;
+  color:var(--green);
+  font-family:'Rajdhani',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.export-btn:hover { background:rgba(0,255,136,0.2); transform:translateY(-1px); }
+
+/* Rate limit display */
+.rate-bar { background:var(--bg-input); border-radius:3px; height:6px; margin-top:4px; overflow:hidden; }
+.rate-fill { height:100%; background:linear-gradient(90deg, var(--green), var(--cyan)); border-radius:3px; transition:width .3s; }
+
+/* Protection indicator */
+.protection-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 12px;
+  background:rgba(255,51,85,0.1);
+  border:1px solid rgba(255,51,85,0.2);
+  border-radius:20px;
+  font-size:11px;
+  color:var(--red);
+  font-weight:700;
+  letter-spacing:1px;
+}
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║           MAINTENANCE OVERLAY            ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="maintenance-overlay" id="maintenanceOverlay">
+  <div style="font-size:48px">🔧</div>
+  <div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--yellow)">MAINTENANCE MODE</div>
+  <div style="color:var(--text-secondary);font-size:14px">Sistem sedang dalam pemeliharaan. Silakan coba lagi nanti.</div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║             LOGIN SCREEN                 ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="screen active" id="loginScreen">
+  <div class="login-grid"></div>
+  <div class="login-particles" id="loginParticles"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🤖</div>
+      <h1>NEXUSAI</h1>
+      <p>PLATFORM KECERDASAN BUATAN</p>
+    </div>
+    <div class="tab-switch">
+      <button class="active" onclick="switchTab('login')">MASUK</button>
+      <button onclick="switchTab('register')">DAFTAR</button>
+    </div>
+    <div id="loginErr" class="login-err"></div>
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <input type="text" id="loginUser" placeholder="Masukkan username..." autocomplete="username">
+          <i class="fas fa-user" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="loginPass" placeholder="Masukkan password..." autocomplete="current-password">
+          <i class="fas fa-lock" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;"></i>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()" id="loginBtn">MASUK</button>
+    </div>
+    <div id="registerForm" style="display:none">
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <input type="text" id="regUser" placeholder="Buat username..." autocomplete="username">
+          <i class="fas fa-user" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="regPass" placeholder="Buat password (min. 6 karakter)..." autocomplete="new-password">
+          <i class="fas fa-lock" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Konfirmasi Password</label>
+        <div class="input-wrap">
+          <input type="password" id="regPass2" placeholder="Ulangi password..." autocomplete="new-password">
+          <i class="fas fa-shield-alt" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;"></i>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doRegister()" id="registerBtn">DAFTAR SEKARANG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              CHAT SCREEN                 ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="screen" id="chatScreen">
+  <!-- Sidebar -->
+  <div class="sidebar" id="chatSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🤖</div>
+      <div class="sidebar-logo">NEXUS<span style="color:var(--purple)">AI</span></div>
+    </div>
+    <button class="new-chat-btn" onclick="newChat()">
+      <i class="fas fa-plus"></i> Chat Baru
+    </button>
+    <div class="chat-list" id="chatList"></div>
+    <div class="sidebar-footer">
+      <button class="user-info-btn" onclick="openProfile()">
+        <div class="user-avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#7b2fff,#00d4ff)">U</div>
+        <div>
+          <div class="user-name" id="sidebarUsername">User</div>
+          <div class="user-role" id="sidebarRole"><span class="status-dot online"></span>Online</div>
+        </div>
+        <i class="fas fa-cog" style="margin-left:auto;color:var(--text-dim);font-size:13px;"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="chat-main">
+    <!-- Announcement Bar -->
+    <div class="announcement-bar" id="announcementBar">
+      <i class="fas fa-bullhorn"></i>
+      <span id="announcementText"></span>
+      <span class="announcement-close" onclick="document.getElementById('announcementBar').classList.remove('show')">✕</span>
+    </div>
+    <!-- Topbar -->
+    <div class="chat-topbar">
+      <button class="topbar-btn" onclick="toggleSidebar()" title="Toggle Sidebar"><i class="fas fa-bars"></i></button>
+      <span class="chat-topbar-title" id="chatTitle">🤖 NexusAI Assistant</span>
+      <span class="protection-badge" title="Proteksi Jailbreak Aktif"><i class="fas fa-shield-alt"></i> PROTECTED</span>
+      <button class="topbar-btn" onclick="exportCurrentChat()" title="Export Chat"><i class="fas fa-download"></i></button>
+      <button class="topbar-btn" onclick="clearCurrentChat()" title="Hapus Chat"><i class="fas fa-trash-alt"></i></button>
+      <button class="topbar-btn" onclick="doLogout()" title="Keluar"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-welcome" id="chatWelcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Halo! Apa yang bisa saya bantu?</h2>
+        <p id="welcomeText">Saya adalah asisten AI cerdas siap membantu Anda dengan berbagai pertanyaan dan tugas.</p>
+        <div class="suggestions">
+          <button class="suggestion-btn" onclick="sendSuggestion('Jelaskan cara kerja AI')">💡 Cara kerja AI</button>
+          <button class="suggestion-btn" onclick="sendSuggestion('Tulis kode Python Hello World')">💻 Kode Python</button>
+          <button class="suggestion-btn" onclick="sendSuggestion('Ceritakan lelucon yang lucu')">😄 Buat lelucon</button>
+          <button class="suggestion-btn" onclick="sendSuggestion('Apa tren teknologi 2024?')">🚀 Tren teknologi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jailbreak Warning -->
+    <div class="jailbreak-warn" id="jailbreakWarn">
+      <i class="fas fa-shield-alt"></i>
+      <span>⚠️ Pesan Anda mengandung pola jailbreak yang dideteksi. Mohon patuhi ketentuan penggunaan.</span>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <div class="chat-input-wrap">
+        <textarea id="chatInput" placeholder="Ketik pesan ke NexusAI..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this);updateCharCount()"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Kirim (Enter)">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+      <div class="char-count"><span id="charCount">0</span> / 4000 karakter · <span id="dailyCount">0</span> / <span id="dailyLimit">100</span> pesan hari ini</div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║             ADMIN PANEL                  ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="screen" id="adminScreen">
+  <!-- Admin Sidebar -->
+  <div class="admin-sidebar">
+    <div class="admin-logo">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">🛡️</span>
+        <div>
+          <div class="admin-logo-text">ADMIN</div>
+          <div class="admin-logo-sub">NEXUSAI CONTROL</div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-nav">
+      <div class="admin-nav-section">Overview</div>
+      <div class="admin-nav-item active" onclick="showAdminPanel('dashboard')">
+        <i class="fas fa-chart-line"></i> Dashboard
+      </div>
+      <div class="admin-nav-section">Konfigurasi AI</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('apiconfig')">
+        <i class="fas fa-key"></i> API & Model
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('aipersona')">
+        <i class="fas fa-robot"></i> AI Persona
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('aimode')">
+        <i class="fas fa-sliders-h"></i> Mode AI
+      </div>
+      <div class="admin-nav-section">Manajemen</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('users')">
+        <i class="fas fa-users"></i> Pengguna
+        <span class="badge" id="userCountBadge">0</span>
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('chatmonitor')">
+        <i class="fas fa-comments"></i> Monitor Chat
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('announcements')">
+        <i class="fas fa-bullhorn"></i> Pengumuman
+      </div>
+      <div class="admin-nav-section">Keamanan</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('ratelimit')">
+        <i class="fas fa-tachometer-alt"></i> Rate Limit
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('blacklist')">
+        <i class="fas fa-ban"></i> Blacklist Kata
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('jailbreaklog')">
+        <i class="fas fa-exclamation-triangle"></i> Log Jailbreak
+        <span class="badge" id="jailbreakBadge" style="display:none">!</span>
+      </div>
+      <div class="admin-nav-section">Pengaturan</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('sitesettings')">
+        <i class="fas fa-cog"></i> Pengaturan Situs
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('appearance')">
+        <i class="fas fa-paint-brush"></i> Tampilan
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('stats')">
+        <i class="fas fa-chart-bar"></i> Statistik Detail
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('exportdata')">
+        <i class="fas fa-file-export"></i> Export Data
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('activitylog')">
+        <i class="fas fa-history"></i> Log Aktivitas
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('maintenance')">
+        <i class="fas fa-tools"></i> Maintenance
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPanel('adminpassword')">
+        <i class="fas fa-lock"></i> Ganti Password
+      </div>
+    </div>
+    <div class="admin-footer">
+      <button class="user-info-btn" onclick="goToChat()">
+        <div class="user-avatar" style="background:linear-gradient(135deg,#ff3355,#7b2fff)">A</div>
+        <div>
+          <div class="user-name">admin123#</div>
+          <div class="user-role" style="color:var(--red)">Super Admin</div>
+        </div>
+        <i class="fas fa-comment" style="margin-left:auto;color:var(--text-dim);font-size:13px;" title="Ke Chat"></i>
+      </button>
+      <button class="user-info-btn" onclick="doLogout()" style="margin-top:4px;">
+        <i class="fas fa-sign-out-alt" style="color:var(--red);margin-right:8px;"></i>
+        <span style="color:var(--red);font-size:13px;font-weight:600;">Keluar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin Main -->
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <span class="admin-topbar-title" id="adminPanelTitle">📊 DASHBOARD</span>
+      <span class="protection-badge"><i class="fas fa-shield-alt"></i> ADMIN SECURED</span>
+      <button class="topbar-btn" onclick="loadAdminData()" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="admin-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="admin-panel active" id="panel-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card cyan">
+            <div class="stat-value" id="stat-totalUsers">0</div>
+            <div class="stat-label">Total Pengguna</div>
+            <i class="fas fa-users stat-icon" style="color:var(--cyan)"></i>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-value" id="stat-totalChats">0</div>
+            <div class="stat-label">Total Chat</div>
+            <i class="fas fa-comments stat-icon" style="color:var(--purple)"></i>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value" id="stat-todayMessages">0</div>
+            <div class="stat-label">Pesan Hari Ini</div>
+            <i class="fas fa-paper-plane stat-icon" style="color:var(--green)"></i>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-value" id="stat-bannedUsers">0</div>
+            <div class="stat-label">User Dibanned</div>
+            <i class="fas fa-ban stat-icon" style="color:var(--red)"></i>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-value" id="stat-jailbreaks">0</div>
+            <div class="stat-label">Jailbreak Detected</div>
+            <i class="fas fa-exclamation-triangle stat-icon" style="color:var(--yellow)"></i>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-bolt"></i> STATUS SISTEM</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">API Status</div>
+              <div id="apiStatus" style="font-size:14px;color:var(--green)"><span class="status-dot online"></span>Terhubung</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Model Aktif</div>
+              <div id="activeModel" style="font-size:13px;color:var(--cyan);font-family:'Share Tech Mono',monospace;">arcee-ai/trinity-large-preview:free</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Maintenance Mode</div>
+              <div id="maintenanceStatus" style="font-size:14px;color:var(--green)"><span class="status-dot online"></span>Nonaktif</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Proteksi Jailbreak</div>
+              <div style="font-size:14px;color:var(--green)"><span class="status-dot online"></span>Aktif</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-users"></i> PENGGUNA TERBARU</div>
+          <table>
+            <thead><tr><th>Username</th><th>Role</th><th>Terdaftar</th><th>Status</th></tr></thead>
+            <tbody id="recentUsersTable"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-history"></i> AKTIVITAS TERBARU</div>
+          <div id="dashRecentActivity"></div>
+        </div>
+      </div>
+
+      <!-- ── API CONFIG ── -->
+      <div class="admin-panel" id="panel-apiconfig">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-key"></i> KONFIGURASI API OPENROUTER</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">API key ini digunakan oleh semua pengguna platform.</p>
+          <div class="admin-input-group">
+            <label>OpenRouter API Key</label>
+            <div style="position:relative;">
+              <input type="password" id="apiKeyInput" placeholder="sk-or-v1-...">
+              <button onclick="toggleApiVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;">
+                <i class="fas fa-eye" id="apiEyeIcon"></i>
+              </button>
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Model AI</label>
+            <input type="text" id="modelInput" placeholder="arcee-ai/trinity-large-preview:free" value="arcee-ai/trinity-large-preview:free">
+          </div>
+          <div class="admin-input-group">
+            <label>Max Tokens per Response</label>
+            <input type="number" id="maxTokensInput" value="2048" min="256" max="8192">
+          </div>
+          <div class="admin-input-group">
+            <label>Temperature (0.0 - 2.0)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" id="tempRange" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('tempVal').textContent=this.value">
+              <span class="range-val" id="tempVal">0.7</span>
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Model Alternatif (cadangan)</label>
+            <select id="altModelSelect">
+              <option value="">-- Tidak ada --</option>
+              <option value="google/gemma-2-9b-it:free">google/gemma-2-9b-it:free</option>
+              <option value="meta-llama/llama-3.2-11b-vision-instruct:free">meta-llama/llama-3.2-11b:free</option>
+              <option value="mistralai/mistral-7b-instruct:free">mistralai/mistral-7b-instruct:free</option>
+              <option value="microsoft/phi-3-mini-128k-instruct:free">microsoft/phi-3-mini:free</option>
+            </select>
+          </div>
+          <button class="admin-save-btn" onclick="saveApiConfig()"><i class="fas fa-save"></i> SIMPAN KONFIGURASI</button>
+          <div id="apiConfigAlert" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-vial"></i> TEST API</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px;">Kirim pesan test untuk memverifikasi API berfungsi.</p>
+          <div class="admin-input-group">
+            <label>Pesan Test</label>
+            <input type="text" id="testMsgInput" placeholder="Halo, tes 1 2 3..." value="Halo! Perkenalkan dirimu.">
+          </div>
+          <button class="admin-save-btn" onclick="testApi()" style="background:linear-gradient(135deg,#00d4ff,#7b2fff)"><i class="fas fa-play"></i> JALANKAN TEST</button>
+          <div id="testApiResult" style="margin-top:12px;padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;font-size:13px;color:var(--text-secondary);display:none;white-space:pre-wrap;"></div>
+        </div>
+      </div>
+
+      <!-- ── AI PERSONA ── -->
+      <div class="admin-panel" id="panel-aipersona">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-robot"></i> PERSONA & SYSTEM PROMPT AI</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Atur kepribadian, identitas, dan panduan perilaku AI.</p>
+          <div class="admin-input-group">
+            <label>Nama AI</label>
+            <input type="text" id="aiNameInput" placeholder="NexusAI" value="NexusAI">
+          </div>
+          <div class="admin-input-group">
+            <label>System Prompt (Instruksi Utama)</label>
+            <textarea id="systemPromptInput" style="min-height:180px;" placeholder="Kamu adalah asisten AI bernama NexusAI yang cerdas, ramah, dan membantu...">Kamu adalah NexusAI, asisten AI canggih yang cerdas, ramah, dan sangat membantu. Kamu berbicara dalam Bahasa Indonesia yang santun dan profesional. Kamu membantu pengguna dengan berbagai pertanyaan, mulai dari sains, teknologi, programming, seni, hingga kehidupan sehari-hari. Jawab dengan akurat, informatif, dan menarik.</textarea>
+          </div>
+          <div class="admin-input-group">
+            <label>Pesan Sambutan (ditampilkan ke user baru)</label>
+            <textarea id="welcomeMsgInput" style="min-height:80px;" placeholder="Selamat datang di NexusAI!...">Halo! Saya NexusAI, asisten AI cerdas siap membantu Anda. Apa yang bisa saya bantu hari ini? 🚀</textarea>
+          </div>
+          <div class="admin-input-group">
+            <label>Emoji Identitas AI</label>
+            <input type="text" id="aiEmojiInput" placeholder="🤖" value="🤖" maxlength="2">
+          </div>
+          <button class="admin-save-btn" onclick="savePersona()"><i class="fas fa-save"></i> SIMPAN PERSONA</button>
+          <div id="personaAlert" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-magic"></i> TEMPLATE PERSONA</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px;">Pilih template siap pakai dan modifikasi sesuai kebutuhan.</p>
+          <div class="model-grid">
+            <div class="model-card" onclick="applyPersonaTemplate('assistant')">
+              <div class="model-name">🤖 Asisten Umum</div>
+              <div class="model-desc">Pembantu serbaguna yang ramah dan informatif</div>
+            </div>
+            <div class="model-card" onclick="applyPersonaTemplate('teacher')">
+              <div class="model-name">👨‍🏫 Guru / Tutor</div>
+              <div class="model-desc">Menjelaskan konsep dengan sabar dan jelas</div>
+            </div>
+            <div class="model-card" onclick="applyPersonaTemplate('coder')">
+              <div class="model-name">💻 Expert Programmer</div>
+              <div class="model-desc">Fokus pada coding, debugging, dan arsitektur</div>
+            </div>
+            <div class="model-card" onclick="applyPersonaTemplate('creative')">
+              <div class="model-name">🎨 Asisten Kreatif</div>
+              <div class="model-desc">Membantu menulis, desain, dan kreativitas</div>
+            </div>
+            <div class="model-card" onclick="applyPersonaTemplate('analyst')">
+              <div class="model-name">📊 Analis Data</div>
+              <div class="model-desc">Analisis data, statistik, dan laporan</div>
+            </div>
+            <div class="model-card" onclick="applyPersonaTemplate('friend')">
+              <div class="model-name">😊 Teman Ngobrol</div>
+              <div class="model-desc">Kasual, santai, dan menyenangkan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI MODE ── -->
+      <div class="admin-panel" id="panel-aimode">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-sliders-h"></i> MODE & PERILAKU AI</div>
+          <div class="toggle-switch">
+            <div class="toggle on" id="toggleStream" onclick="toggleFeature(this,'streamMode')"></div>
+            <label>Streaming Response (efek ketik)</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle on" id="toggleMarkdown" onclick="toggleFeature(this,'markdownMode')"></div>
+            <label>Format Markdown (bold, code, dll)</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle on" id="toggleHistory" onclick="toggleFeature(this,'historyMode')"></div>
+            <label>Kirim Riwayat Chat ke AI (konteks)</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle off" id="toggleSafeMode" onclick="toggleFeature(this,'safeMode')"></div>
+            <label>Safe Mode (filter konten dewasa)</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle on" id="toggleJailbreakProt" onclick="toggleFeature(this,'jailbreakProtection')"></div>
+            <label>Proteksi Anti-Jailbreak (WAJIB AKTIF)</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle off" id="toggleDebug" onclick="toggleFeature(this,'debugMode')"></div>
+            <label>Debug Mode (tampilkan log di console)</label>
+          </div>
+          <hr style="border:1px solid var(--border);margin:20px 0;">
+          <div class="admin-input-group">
+            <label>Panjang Riwayat Context (pesan)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" id="contextRange" min="2" max="20" step="2" value="10" oninput="document.getElementById('contextVal').textContent=this.value">
+              <span class="range-val" id="contextVal">10</span>
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Karakter Maksimal per Pesan User</label>
+            <input type="number" id="maxCharInput" value="4000" min="100" max="10000">
+          </div>
+          <div class="admin-input-group">
+            <label>Prefix Pesan AI (opsional)</label>
+            <input type="text" id="aiPrefixInput" placeholder="Contoh: 🤖 NexusAI:">
+          </div>
+          <button class="admin-save-btn" onclick="saveAiMode()"><i class="fas fa-save"></i> SIMPAN MODE</button>
+          <div id="aiModeAlert" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div class="admin-panel" id="panel-users">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-users"></i> MANAJEMEN PENGGUNA</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <input type="text" id="userSearchInput" placeholder="🔍 Cari username..." style="flex:1;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;" oninput="filterUsers()">
+            <select id="userRoleFilter" onchange="filterUsers()" style="padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;color:var(--text-primary);font-family:'Rajdhani',sans-serif;outline:none;">
+              <option value="">Semua Role</option>
+              <option value="admin">Admin</option>
+              <option value="user">User</option>
+              <option value="banned">Banned</option>
+            </select>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th><th>Role</th><th>Pesan</th><th>Terdaftar</th><th>Status</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── CHAT MONITOR ── -->
+      <div class="admin-panel" id="panel-chatmonitor">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-eye"></i> MONITOR CHAT PENGGUNA</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Klik pengguna untuk melihat riwayat chat mereka.</p>
+          <div id="chatMonitorList"></div>
+        </div>
+        <div class="card" id="chatMonitorDetail" style="display:none;">
+          <div class="card-title"><i class="fas fa-comments"></i> DETAIL CHAT: <span id="monitorUsername"></span></div>
+          <div id="monitorMessages" style="max-height:400px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <!-- ── ANNOUNCEMENTS ── -->
+      <div class="admin-panel" id="panel-announcements">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-plus-circle"></i> BUAT PENGUMUMAN BARU</div>
+          <div class="admin-input-group">
+            <label>Pesan Pengumuman</label>
+            <textarea id="annMsgInput" placeholder="Tulis pengumuman untuk semua pengguna..." style="min-height:80px;"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="toggle off" id="annActiveToggle" onclick="this.classList.toggle('on');this.classList.toggle('off')"></div>
+            <label style="font-size:13px;color:var(--text-primary);">Aktifkan langsung</label>
+          </div>
+          <button class="admin-save-btn" onclick="addAnnouncement()" style="margin-top:14px;"><i class="fas fa-send"></i> KIRIM PENGUMUMAN</button>
+          <div id="annAlert" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-list"></i> DAFTAR PENGUMUMAN</div>
+          <div id="announcementsList"></div>
+        </div>
+      </div>
+
+      <!-- ── RATE LIMIT ── -->
+      <div class="admin-panel" id="panel-ratelimit">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-tachometer-alt"></i> PENGATURAN RATE LIMIT</div>
+          <div class="admin-input-group">
+            <label>Maksimal Pesan per Hari (per User)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" id="rateLimitRange" min="10" max="1000" step="10" value="100" oninput="document.getElementById('rateLimitVal').textContent=this.value">
+              <span class="range-val" id="rateLimitVal">100</span>
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Cooldown Antar Pesan (detik)</label>
+            <input type="number" id="cooldownInput" value="2" min="0" max="60">
+          </div>
+          <div class="admin-input-group">
+            <label>Max Tokens per Request</label>
+            <input type="number" id="maxTokensLimit" value="2048" min="256" max="8192">
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle off" id="toggleBurstProtect" onclick="toggleFeature(this,'burstProtection')"></div>
+            <label>Proteksi Burst Request (anti-spam)</label>
+          </div>
+          <button class="admin-save-btn" onclick="saveRateLimit()"><i class="fas fa-save"></i> SIMPAN RATE LIMIT</button>
+          <div id="rateLimitAlert" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-users"></i> PENGGUNAAN USER HARI INI</div>
+          <div id="userUsageList"></div>
+        </div>
+      </div>
+
+      <!-- ── BLACKLIST ── -->
+      <div class="admin-panel" id="panel-blacklist">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-ban"></i> BLACKLIST KATA TERLARANG</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Pesan yang mengandung kata-kata ini akan diblokir otomatis.</p>
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <input type="text" id="blacklistInput" placeholder="Tambah kata terlarang..." style="flex:1;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')addBlacklistWord()">
+            <button class="admin-save-btn" onclick="addBlacklistWord()"><i class="fas fa-plus"></i> TAMBAH</button>
+          </div>
+          <div class="blacklist-tags" id="blacklistTags"></div>
+          <div id="blacklistAlert" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-shield-alt"></i> POLA JAILBREAK BAWAAN</div>
+          <p style="color:var(--text-secondary);font-size:13px;">Pola deteksi jailbreak yang selalu aktif dan tidak bisa dinonaktifkan:</p>
+          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;" id="builtinPatterns"></div>
+        </div>
+      </div>
+
+      <!-- ── JAILBREAK LOG ── -->
+      <div class="admin-panel" id="panel-jailbreaklog">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-exclamation-triangle"></i> LOG PERCOBAAN JAILBREAK</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+            <span style="color:var(--text-secondary);font-size:13px;flex:1;">Semua percobaan jailbreak tercatat di sini untuk audit keamanan.</span>
+            <button class="export-btn" onclick="exportJailbreakLog()"><i class="fas fa-download"></i> Export</button>
+            <button class="action-btn del" onclick="clearJailbreakLog()">Hapus Semua</button>
+          </div>
+          <div id="jailbreakLogList"></div>
+        </div>
+      </div>
+
+      <!-- ── SITE SETTINGS ── -->
+      <div class="admin-panel" id="panel-sitesettings">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-globe"></i> PENGATURAN SITUS</div>
+          <div class="form-row">
+            <div class="admin-input-group">
+              <label>Nama Situs</label>
+              <input type="text" id="siteNameInput" value="NexusAI">
+            </div>
+            <div class="admin-input-group">
+              <label>Tagline / Deskripsi</label>
+              <input type="text" id="siteTaglineInput" value="Platform Kecerdasan Buatan">
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Footer Text</label>
+            <input type="text" id="footerTextInput" value="© 2025 NexusAI. All rights reserved.">
+          </div>
+          <div class="admin-input-group">
+            <label>URL Favicon (emoji atau URL gambar)</label>
+            <input type="text" id="faviconInput" value="🤖">
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle off" id="toggleRegistration" onclick="toggleFeature(this,'allowRegistration')"></div>
+            <label>Izinkan Registrasi Pengguna Baru</label>
+          </div>
+          <div class="toggle-switch">
+            <div class="toggle off" id="toggleGuestMode" onclick="toggleFeature(this,'guestMode')"></div>
+            <label>Mode Tamu (tanpa login)</label>
+          </div>
+          <button class="admin-save-btn" onclick="saveSiteSettings()"><i class="fas fa-save"></i> SIMPAN PENGATURAN</button>
+          <div id="siteSettingsAlert" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ── APPEARANCE ── -->
+      <div class="admin-panel" id="panel-appearance">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-paint-brush"></i> PENGATURAN TAMPILAN</div>
+          <div class="admin-input-group">
+            <label>Tema Warna Aksen</label>
+            <div class="color-swatches" id="themeSwatches">
+              <div class="color-swatch selected" style="background:linear-gradient(135deg,#00d4ff,#7b2fff)" onclick="selectTheme('cyan-purple',this)"></div>
+              <div class="color-swatch" style="background:linear-gradient(135deg,#ff2d7e,#7b2fff)" onclick="selectTheme('pink-purple',this)"></div>
+              <div class="color-swatch" style="background:linear-gradient(135deg,#00ff88,#00d4ff)" onclick="selectTheme('green-cyan',this)"></div>
+              <div class="color-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff3355)" onclick="selectTheme('yellow-red',this)"></div>
+              <div class="color-swatch" style="background:linear-gradient(135deg,#7b2fff,#ff2d7e)" onclick="selectTheme('purple-pink',this)"></div>
+            </div>
+          </div>
+          <div class="admin-input-group">
+            <label>Custom CSS (lanjutan)</label>
+            <textarea id="customCssInput" placeholder="/* Tambah CSS kustom di sini */" style="min-height:120px;font-family:'Share Tech Mono',monospace;font-size:12px;"></textarea>
+          </div>
+          <button class="admin-save-btn" onclick="saveAppearance()"><i class="fas fa-save"></i> SIMPAN TAMPILAN</button>
+          <div id="appearanceAlert" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ── STATS ── -->
+      <div class="admin-panel" id="panel-stats">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-bar"></i> STATISTIK DETAIL</div>
+          <div id="detailStats"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-line"></i> TOP 5 PENGGUNA AKTIF</div>
+          <div id="topUsersStats"></div>
+        </div>
+      </div>
+
+      <!-- ── EXPORT ── -->
+      <div class="admin-panel" id="panel-exportdata">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-file-export"></i> EXPORT DATA</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Download data platform dalam berbagai format.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div style="padding:18px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+              <div style="font-size:20px;margin-bottom:8px;">👥</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Data Pengguna</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Semua akun terdaftar (JSON)</div>
+              <button class="export-btn" onclick="exportUsers()"><i class="fas fa-download"></i> Download</button>
+            </div>
+            <div style="padding:18px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+              <div style="font-size:20px;margin-bottom:8px;">💬</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Semua Chat Log</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Riwayat chat semua user (JSON)</div>
+              <button class="export-btn" onclick="exportAllChats()"><i class="fas fa-download"></i> Download</button>
+            </div>
+            <div style="padding:18px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+              <div style="font-size:20px;margin-bottom:8px;">⚙️</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Konfigurasi Sistem</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Semua pengaturan (JSON)</div>
+              <button class="export-btn" onclick="exportSettings()"><i class="fas fa-download"></i> Download</button>
+            </div>
+            <div style="padding:18px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;">
+              <div style="font-size:20px;margin-bottom:8px;">🛡️</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Log Keamanan</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Log admin & jailbreak (JSON)</div>
+              <button class="export-btn" onclick="exportSecurityLogs()"><i class="fas fa-download"></i> Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ACTIVITY LOG ── -->
+      <div class="admin-panel" id="panel-activitylog">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-history"></i> LOG AKTIVITAS ADMIN</div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <button class="action-btn del" onclick="clearAdminLog()">Hapus Log</button>
+          </div>
+          <div id="activityLogList" style="max-height:500px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <!-- ── MAINTENANCE ── -->
+      <div class="admin-panel" id="panel-maintenance">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-tools"></i> MODE MAINTENANCE</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Saat maintenance mode aktif, pengguna biasa tidak bisa mengakses chat. Admin tetap bisa masuk.</p>
+          <div class="toggle-switch" style="margin-bottom:20px;">
+            <div class="toggle off" id="maintenanceToggle" onclick="toggleMaintenance(this)"></div>
+            <label style="font-size:16px;font-weight:600;">Aktifkan Maintenance Mode</label>
+          </div>
+          <div class="admin-input-group">
+            <label>Pesan Maintenance</label>
+            <textarea id="maintenanceMsgInput" placeholder="Sistem sedang dalam pemeliharaan..." style="min-height:80px;">Sistem sedang dalam pemeliharaan. Kami akan kembali segera. Terima kasih atas kesabaran Anda.</textarea>
+          </div>
+          <button class="admin-save-btn" onclick="saveMaintenance()"><i class="fas fa-save"></i> SIMPAN</button>
+          <div id="maintenanceAlert" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ── CHANGE ADMIN PASSWORD ── -->
+      <div class="admin-panel" id="panel-adminpassword">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-lock"></i> GANTI PASSWORD ADMIN</div>
+          <div class="admin-input-group">
+            <label>Password Lama</label>
+            <input type="password" id="oldPassInput" placeholder="Masukkan password lama...">
+          </div>
+          <div class="admin-input-group">
+            <label>Password Baru</label>
+            <input type="password" id="newPassInput" placeholder="Password baru (min. 6 karakter)...">
+          </div>
+          <div class="admin-input-group">
+            <label>Konfirmasi Password Baru</label>
+            <input type="password" id="newPass2Input" placeholder="Ulangi password baru...">
+          </div>
+          <button class="admin-save-btn" onclick="changeAdminPassword()"><i class="fas fa-key"></i> GANTI PASSWORD</button>
+          <div id="adminPassAlert" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-title">
+      <i class="fas fa-user-circle"></i> PROFIL PENGGUNA
+      <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div class="profile-avatar-preview" id="profileAvatarPreview" style="background:linear-gradient(135deg,#7b2fff,#00d4ff)">U</div>
+    <div class="admin-input-group">
+      <label>Username</label>
+      <input type="text" id="profileUsernameInput" placeholder="Username...">
+    </div>
+    <div class="admin-input-group">
+      <label>Warna Avatar</label>
+      <div class="color-swatches" id="avatarColors">
+        <div class="color-swatch selected" style="background:linear-gradient(135deg,#7b2fff,#00d4ff)" data-color="linear-gradient(135deg,#7b2fff,#00d4ff)" onclick="selectAvatarColor(this)"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#ff2d7e,#7b2fff)" data-color="linear-gradient(135deg,#ff2d7e,#7b2fff)" onclick="selectAvatarColor(this)"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#00ff88,#00d4ff)" data-color="linear-gradient(135deg,#00ff88,#00d4ff)" onclick="selectAvatarColor(this)"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff6b35)" data-color="linear-gradient(135deg,#ffcc00,#ff6b35)" onclick="selectAvatarColor(this)"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#ff3355,#ff6b35)" data-color="linear-gradient(135deg,#ff3355,#ff6b35)" onclick="selectAvatarColor(this)"></div>
+      </div>
+    </div>
+    <div class="admin-input-group">
+      <label>Ganti Password (kosongkan jika tidak berubah)</label>
+      <input type="password" id="profileNewPass" placeholder="Password baru...">
+    </div>
+    <button class="admin-save-btn" onclick="saveProfile()" style="width:100%;"><i class="fas fa-save"></i> SIMPAN PROFIL</button>
+    <div id="profileAlert" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- Chat Monitor Detail Modal -->
+<div class="modal-overlay" id="chatDetailModal">
+  <div class="modal" style="width:600px;">
+    <div class="modal-title">
+      <i class="fas fa-comments"></i> DETAIL CHAT
+      <button class="modal-close" onclick="closeModal('chatDetailModal')">✕</button>
+    </div>
+    <div id="chatDetailContent" style="max-height:400px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastMsg">Berhasil!</span>
+</div>
+
+<!-- ═══════════════ FIREBASE & APP LOGIC ═══════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyALWlgAyQXUomwnf520gmdoBMOFbdlWaB0",
+  authDomain: "alamak-ce66a.firebaseapp.com",
+  databaseURL: "https://alamak-ce66a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "alamak-ce66a",
+  storageBucket: "alamak-ce66a.firebasestorage.app",
+  messagingSenderId: "496086877660",
+  appId: "1:496086877660:web:4d758986c878cb15bd7b19",
+  measurementId: "G-5K0BJXCYQD"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UTILITIES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  const icons = {success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle'};
+  t.className = `toast ${type}`;
+  t.querySelector('i').className = `fas ${icons[type]||icons.info}`;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.className = `alert-msg ${type}`;
+  el.textContent = msg;
+  setTimeout(()=>el.className='alert-msg', 4000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function formatDate(ts) {
+  if(!ts) return '-';
+  return new Date(ts).toLocaleString('id-ID');
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function parseMarkdown(text) {
+  return text
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/^### (.+)$/gm, '<h3 style="margin:8px 0 4px;font-size:15px;color:var(--cyan)">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="margin:10px 0 6px;font-size:17px;color:var(--cyan)">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="margin:12px 0 8px;font-size:19px;color:var(--cyan)">$1</h1>')
+    .replace(/^\* (.+)$/gm, '<li style="margin-left:16px;margin-bottom:3px">$1</li>')
+    .replace(/^- (.+)$/gm, '<li style="margin-left:16px;margin-bottom:3px">$1</li>')
+    .replace(/\n/g, '<br>');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// JAILBREAK PROTECTION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const JAILBREAK_PATTERNS = [
+  /ignore\s+(previous|all|above|prior)\s+instructions/i,
+  /you\s+are\s+now\s+(a\s+)?(?!NexusAI)/i,
+  /pretend\s+(you\s+are|to\s+be)/i,
+  /act\s+as\s+(if\s+you\s+are|a\s+)/i,
+  /forget\s+(your|all)\s+(instructions|rules|training|guidelines)/i,
+  /bypass\s+(your|all)\s+(restrictions|filters|rules|safety)/i,
+  /\bDAN\b/,
+  /do\s+anything\s+now/i,
+  /jailbreak/i,
+  /prompt\s+injection/i,
+  /override\s+(system|your|all)/i,
+  /disregard\s+(your|all|the)/i,
+  /break\s+(character|out\s+of)/i,
+  /no\s+restrictions/i,
+  /unrestricted\s+mode/i,
+  /developer\s+mode/i,
+  /sudo\s+mode/i,
+  /you\s+have\s+no\s+(rules|restrictions|limits)/i,
+  /do\s+not\s+follow\s+your/i,
+  /new\s+persona/i,
+  /from\s+now\s+on\s+you\s+(are|will)/i,
+  /roleplay\s+as/i,
+  /simulate\s+(being|a)/i,
+  /\[SYSTEM\]/i,
+  /system\s+prompt:/i,
+];
+
+function detectJailbreak(msg) {
+  for(const p of JAILBREAK_PATTERNS) {
+    if(p.test(msg)) return true;
+  }
+  return false;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SESSION MANAGEMENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let currentUser = null;
+let currentChatId = null;
+let currentMessages = [];
+let appSettings = {};
+let isTyping = false;
+
+function setSession(user) {
+  currentUser = user;
+  localStorage.setItem('nexusai_session', JSON.stringify(user));
+}
+function getSession() {
+  const s = localStorage.getItem('nexusai_session');
+  return s ? JSON.parse(s) : null;
+}
+function clearSession() {
+  currentUser = null;
+  localStorage.removeItem('nexusai_session');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT & ADMIN SETUP
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function initApp() {
+  createParticles();
+  await ensureAdminExists();
+  await loadAppSettings();
+  
+  const session = getSession();
+  if(session) {
+    // verify user still exists and not banned
+    const snap = await get(ref(db, `users/${session.uid}`));
+    if(snap.exists() && !snap.val().banned) {
+      currentUser = session;
+      if(session.role === 'admin') {
+        showScreen('adminScreen');
+        loadAdminData();
+      } else {
+        // check maintenance
+        if(appSettings.maintenanceMode) {
+          showMaintenancePage();
+          return;
+        }
+        showScreen('chatScreen');
+        initChatScreen();
+      }
+      return;
+    } else {
+      clearSession();
+    }
+  }
+  showScreen('loginScreen');
+}
+
+async function ensureAdminExists() {
+  const adminRef = ref(db, 'users/admin_root');
+  const snap = await get(adminRef);
+  if(!snap.exists()) {
+    const hash = await sha256('admin123#');
+    await set(adminRef, {
+      uid: 'admin_root',
+      username: 'admin123#',
+      passwordHash: hash,
+      role: 'admin',
+      createdAt: Date.now(),
+      banned: false,
+      avatarColor: 'linear-gradient(135deg,#ff3355,#7b2fff)',
+      messageCount: 0
+    });
+    // init default settings
+    await set(ref(db, 'settings'), {
+      apiKey: '',
+      model: 'arcee-ai/trinity-large-preview:free',
+      maxTokens: 2048,
+      temperature: 0.7,
+      systemPrompt: 'Kamu adalah NexusAI, asisten AI canggih yang cerdas, ramah, dan sangat membantu. Kamu berbicara dalam Bahasa Indonesia yang santun dan profesional. Jawab dengan akurat, informatif, dan menarik.',
+      aiName: 'NexusAI',
+      aiEmoji: '🤖',
+      welcomeMessage: 'Halo! Saya NexusAI, asisten AI cerdas siap membantu Anda. Apa yang bisa saya bantu hari ini? 🚀',
+      rateLimitPerDay: 100,
+      cooldown: 2,
+      maintenanceMode: false,
+      maintenanceMsg: 'Sistem sedang dalam pemeliharaan.',
+      allowRegistration: true,
+      siteName: 'NexusAI',
+      siteTagline: 'Platform Kecerdasan Buatan',
+      streamMode: true,
+      markdownMode: true,
+      historyMode: true,
+      jailbreakProtection: true,
+      contextLength: 10,
+      maxCharPerMsg: 4000,
+      blacklist: [],
+      theme: 'cyan-purple',
+    });
+  }
+}
+
+async function loadAppSettings() {
+  const snap = await get(ref(db, 'settings'));
+  if(snap.exists()) appSettings = snap.val();
+}
+
+function showMaintenancePage() {
+  const o = document.getElementById('maintenanceOverlay');
+  o.classList.add('show');
+  setTimeout(()=>{showScreen('loginScreen');o.classList.remove('show');},0);
+  showScreen('loginScreen');
+  showToast('Sistem dalam maintenance mode', 'error');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SCREEN NAVIGATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+window.goToChat = () => { showScreen('chatScreen'); initChatScreen(); };
+window.goToAdmin = () => { showScreen('adminScreen'); loadAdminData(); };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AUTH
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.switchTab = (tab) => {
+  const btns = document.querySelectorAll('.tab-switch button');
+  btns[0].classList.toggle('active', tab==='login');
+  btns[1].classList.toggle('active', tab==='register');
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+  document.getElementById('loginErr').classList.remove('show');
+};
+
+window.doLogin = async () => {
+  const btn = document.getElementById('loginBtn');
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  
+  if(!username || !password) {
+    errEl.textContent='Isi semua field!'; errEl.classList.add('show'); return;
+  }
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  
+  try {
+    const hash = await sha256(password);
+    // Find user by username
+    const snap = await get(ref(db, 'users'));
+    if(!snap.exists()) {
+      errEl.textContent='Username atau password salah!'; errEl.classList.add('show');
+      btn.innerHTML='MASUK'; btn.disabled=false; return;
+    }
+    let foundUser = null;
+    snap.forEach(child => {
+      const u = child.val();
+      if(u.username === username && u.passwordHash === hash) foundUser = u;
+    });
+    if(!foundUser) {
+      errEl.textContent='Username atau password salah!'; errEl.classList.add('show');
+      btn.innerHTML='MASUK'; btn.disabled=false; return;
+    }
+    if(foundUser.banned) {
+      errEl.textContent='Akun Anda telah dibanned. Hubungi admin.'; errEl.classList.add('show');
+      btn.innerHTML='MASUK'; btn.disabled=false; return;
+    }
+    await loadAppSettings();
+    setSession(foundUser);
+    // Log login
+    await logAdminActivity(foundUser.username, 'login', `User ${foundUser.username} login`);
+    if(foundUser.role === 'admin') {
+      showScreen('adminScreen');
+      loadAdminData();
+    } else {
+      if(appSettings.maintenanceMode && foundUser.role !== 'admin') {
+        showMaintenancePage();
+        btn.innerHTML='MASUK'; btn.disabled=false; return;
+      }
+      showScreen('chatScreen');
+      initChatScreen();
+    }
+  } catch(e) {
+    errEl.textContent='Error: '+e.message; errEl.classList.add('show');
+    btn.innerHTML='MASUK'; btn.disabled=false;
+  }
+};
+
+window.doRegister = async () => {
+  await loadAppSettings();
+  if(!appSettings.allowRegistration) {
+    document.getElementById('loginErr').textContent='Registrasi sedang ditutup.';
+    document.getElementById('loginErr').classList.add('show'); return;
+  }
+  const btn = document.getElementById('registerBtn');
+  const username = document.getElementById('regUser').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const errEl = document.getElementById('loginErr');
+  
+  if(!username||!pass||!pass2){errEl.textContent='Isi semua field!';errEl.classList.add('show');return;}
+  if(username.length<3){errEl.textContent='Username min. 3 karakter!';errEl.classList.add('show');return;}
+  if(pass.length<6){errEl.textContent='Password min. 6 karakter!';errEl.classList.add('show');return;}
+  if(pass!==pass2){errEl.textContent='Password tidak cocok!';errEl.classList.add('show');return;}
+  
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  try {
+    // Check username taken
+    const snap = await get(ref(db, 'users'));
+    if(snap.exists()) {
+      let taken=false;
+      snap.forEach(c=>{if(c.val().username===username)taken=true;});
+      if(taken){errEl.textContent='Username sudah dipakai!';errEl.classList.add('show');btn.innerHTML='DAFTAR SEKARANG';btn.disabled=false;return;}
+    }
+    const newUid = uid();
+    const hash = await sha256(pass);
+    const newUser = {
+      uid: newUid, username, passwordHash: hash, role:'user',
+      createdAt: Date.now(), banned:false,
+      avatarColor:'linear-gradient(135deg,#7b2fff,#00d4ff)', messageCount:0
+    };
+    await set(ref(db, `users/${newUid}`), newUser);
+    setSession(newUser);
+    showToast('Akun berhasil dibuat!', 'success');
+    showScreen('chatScreen');
+    initChatScreen();
+  } catch(e) {
+    errEl.textContent='Error: '+e.message; errEl.classList.add('show');
+    btn.innerHTML='DAFTAR SEKARANG'; btn.disabled=false;
+  }
+};
+
+window.doLogout = async () => {
+  if(currentUser) await logAdminActivity(currentUser.username,'logout',`User ${currentUser.username} logout`);
+  clearSession();
+  currentMessages=[];
+  currentChatId=null;
+  showScreen('loginScreen');
+  document.getElementById('chatMessages').innerHTML='';
+  showToast('Berhasil keluar', 'info');
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHAT SCREEN INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function initChatScreen() {
+  await loadAppSettings();
+  // Set user info in sidebar
+  document.getElementById('sidebarUsername').textContent = currentUser.username;
+  const av = document.getElementById('sidebarAvatar');
+  av.style.background = currentUser.avatarColor || 'linear-gradient(135deg,#7b2fff,#00d4ff)';
+  av.textContent = currentUser.username[0].toUpperCase();
+  
+  // Welcome message
+  const wt = document.getElementById('welcomeText');
+  if(wt) wt.textContent = appSettings.welcomeMessage || 'Saya adalah asisten AI cerdas siap membantu Anda.';
+  
+  // Daily limit display
+  document.getElementById('dailyLimit').textContent = appSettings.rateLimitPerDay || 100;
+  
+  // Load chat list
+  loadChatList();
+  
+  // Load announcement
+  loadAnnouncement();
+  
+  // Load daily count
+  loadDailyCount();
+  
+  // Start new chat if none
+  if(!currentChatId) newChat();
+}
+
+async function loadDailyCount() {
+  if(!currentUser) return;
+  const today = new Date().toISOString().split('T')[0];
+  const snap = await get(ref(db, `dailyUsage/${currentUser.uid}/${today}`));
+  document.getElementById('dailyCount').textContent = snap.exists() ? snap.val() : 0;
+}
+
+async function loadAnnouncement() {
+  const snap = await get(ref(db, 'announcements'));
+  if(!snap.exists()) return;
+  let latest = null;
+  snap.forEach(c=>{const v=c.val();if(v.active&&(!latest||v.createdAt>latest.createdAt))latest=v;});
+  if(latest) {
+    document.getElementById('announcementText').textContent = latest.message;
+    document.getElementById('announcementBar').classList.add('show');
+  }
+}
+
+async function loadChatList() {
+  if(!currentUser) return;
+  const snap = await get(ref(db, `chats/${currentUser.uid}`));
+  const list = document.getElementById('chatList');
+  list.innerHTML='';
+  if(!snap.exists()){newChat();return;}
+  const chats=[];
+  snap.forEach(c=>chats.push({id:c.key,...c.val()}));
+  chats.sort((a,b)=>b.updatedAt-a.updatedAt);
+  chats.forEach(chat=>{
+    const d = document.createElement('div');
+    d.className = `chat-item${chat.id===currentChatId?' active':''}`;
+    d.innerHTML = `
+      <i class="fas fa-comment chat-item-icon"></i>
+      <div class="chat-item-text">
+        <div class="chat-item-title">${escapeHtml(chat.title||'Chat Baru')}</div>
+        <div class="chat-item-date">${formatDate(chat.updatedAt)}</div>
+      </div>
+      <button class="chat-item-del" onclick="event.stopPropagation();deleteChat('${chat.id}')" title="Hapus"><i class="fas fa-trash"></i></button>`;
+    d.onclick = () => loadChat(chat.id);
+    list.appendChild(d);
+  });
+}
+
+window.newChat = () => {
+  currentChatId = uid();
+  currentMessages = [];
+  document.getElementById('chatTitle').textContent = '🤖 NexusAI Assistant';
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = `
+    <div class="chat-welcome" id="chatWelcome">
+      <div class="welcome-icon">${appSettings.aiEmoji||'🤖'}</div>
+      <h2>Halo! Apa yang bisa saya bantu?</h2>
+      <p id="welcomeText">${appSettings.welcomeMessage||'Saya adalah asisten AI cerdas siap membantu Anda.'}</p>
+      <div class="suggestions">
+        <button class="suggestion-btn" onclick="sendSuggestion('Jelaskan cara kerja AI')">💡 Cara kerja AI</button>
+        <button class="suggestion-btn" onclick="sendSuggestion('Tulis kode Python Hello World')">💻 Kode Python</button>
+        <button class="suggestion-btn" onclick="sendSuggestion('Ceritakan sejarah Indonesia')">📚 Sejarah</button>
+        <button class="suggestion-btn" onclick="sendSuggestion('Apa tren teknologi 2025?')">🚀 Tren teknologi</button>
+      </div>
+    </div>`;
+  loadChatList();
+};
+
+async function loadChat(chatId) {
+  currentChatId = chatId;
+  const snap = await get(ref(db, `chats/${currentUser.uid}/${chatId}`));
+  if(!snap.exists()) return;
+  const chat = snap.val();
+  currentMessages = chat.messages || [];
+  document.getElementById('chatTitle').textContent = `${appSettings.aiEmoji||'🤖'} ${chat.title||'Chat'}`;
+  
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML='';
+  currentMessages.forEach(m=>renderMessage(m.role, m.content, m.timestamp));
+  msgs.scrollTop=msgs.scrollHeight;
+  
+  // Update active chat in list
+  document.querySelectorAll('.chat-item').forEach(el=>el.classList.remove('active'));
+  loadChatList();
+}
+
+window.deleteChat = async (chatId) => {
+  await remove(ref(db, `chats/${currentUser.uid}/${chatId}`));
+  if(chatId===currentChatId) newChat();
+  else loadChatList();
+  showToast('Chat dihapus', 'success');
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SEND MESSAGE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.sendSuggestion = (text) => {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+};
+
+window.handleKey = (e) => {
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+};
+
+window.autoResize = (el) => {
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,140)+'px';
+};
+
+window.updateCharCount = () => {
+  const len = document.getElementById('chatInput').value.length;
+  document.getElementById('charCount').textContent = len;
+};
+
+window.sendMessage = async () => {
+  if(isTyping) return;
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  
+  await loadAppSettings();
+  
+  // Check daily limit
+  const today = new Date().toISOString().split('T')[0];
+  const usageRef = ref(db, `dailyUsage/${currentUser.uid}/${today}`);
+  const usageSnap = await get(usageRef);
+  const dailyUsed = usageSnap.exists() ? usageSnap.val() : 0;
+  const limit = appSettings.rateLimitPerDay || 100;
+  if(dailyUsed >= limit) {
+    showToast(`Batas harian ${limit} pesan tercapai. Reset besok.`, 'error'); return;
+  }
+  
+  // Check blacklist
+  const blacklist = appSettings.blacklist || [];
+  const msgLower = msg.toLowerCase();
+  for(const word of blacklist) {
+    if(word && msgLower.includes(word.toLowerCase())) {
+      showToast('Pesan mengandung kata terlarang!', 'error'); return;
+    }
+  }
+  
+  // Check jailbreak
+  const jailWarn = document.getElementById('jailbreakWarn');
+  if(appSettings.jailbreakProtection !== false && detectJailbreak(msg)) {
+    jailWarn.classList.add('show');
+    setTimeout(()=>jailWarn.classList.remove('show'),5000);
+    // Log jailbreak attempt
+    await push(ref(db,'jailbreakLogs'),{
+      uid: currentUser.uid,
+      username: currentUser.username,
+      message: msg.substring(0,200),
+      timestamp: Date.now()
+    });
+    // Update counter
+    const jSnap = await get(ref(db,'settings/jailbreakCount'));
+    await set(ref(db,'settings/jailbreakCount'), (jSnap.exists()?jSnap.val():0)+1);
+    showToast('⚠️ Percobaan jailbreak terdeteksi!', 'error');
+    return;
+  }
+  jailWarn.classList.remove('show');
+  
+  if(!appSettings.apiKey) {
+    showToast('API key belum dikonfigurasi. Hubungi admin.', 'error'); return;
+  }
+  
+  input.value=''; input.style.height='auto'; updateCharCount();
+  const ts = Date.now();
+  
+  // Remove welcome screen
+  const welcome = document.getElementById('chatWelcome');
+  if(welcome) welcome.remove();
+  
+  // Render user message
+  renderMessage('user', msg, ts);
+  
+  // Add to messages array
+  currentMessages.push({role:'user', content:msg, timestamp:ts});
+  
+  // Show typing
+  const typingEl = addTypingIndicator();
+  isTyping=true;
+  document.getElementById('sendBtn').disabled=true;
+  
+  // Set title if first message
+  if(currentMessages.length===1) {
+    const title = msg.length > 40 ? msg.substring(0,40)+'…' : msg;
+    document.getElementById('chatTitle').textContent = `${appSettings.aiEmoji||'🤖'} ${title}`;
+    await set(ref(db, `chats/${currentUser.uid}/${currentChatId}/title`), title);
+  }
+  
+  try {
+    // Build messages for API
+    const apiMsgs = [{role:'system', content: appSettings.systemPrompt||'You are a helpful AI assistant.'}];
+    const ctxLen = appSettings.contextLength || 10;
+    const history = currentMessages.slice(-ctxLen);
+    history.forEach(m=>{if(m.role!=='system')apiMsgs.push({role:m.role,content:m.content});});
+    
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${appSettings.apiKey}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title':'NexusAI'
+      },
+      body: JSON.stringify({
+        model: appSettings.model || 'arcee-ai/trinity-large-preview:free',
+        messages: apiMsgs,
+        max_tokens: appSettings.maxTokens || 2048,
+        temperature: parseFloat(appSettings.temperature||0.7),
+        stream: false
+      })
+    });
+    
+    if(!resp.ok) {
+      const errData = await resp.json().catch(()=>({}));
+      throw new Error(errData.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    const aiText = data.choices?.[0]?.message?.content || 'Maaf, tidak ada respons dari AI.';
+    
+    typingEl.remove();
+    const aiTs = Date.now();
+    renderMessage('ai', aiText, aiTs);
+    currentMessages.push({role:'assistant', content:aiText, timestamp:aiTs});
+    
+    // Save chat
+    await set(ref(db, `chats/${currentUser.uid}/${currentChatId}`),{
+      title: currentMessages[0]?.content?.substring(0,40)||'Chat',
+      messages: currentMessages,
+      updatedAt: aiTs,
+      createdAt: currentMessages[0]?.timestamp || aiTs
+    });
+    
+    // Update daily usage
+    await set(usageRef, dailyUsed+1);
+    document.getElementById('dailyCount').textContent = dailyUsed+1;
+    
+    // Update user message count
+    const userSnap = await get(ref(db,`users/${currentUser.uid}/messageCount`));
+    await set(ref(db,`users/${currentUser.uid}/messageCount`),(userSnap.exists()?userSnap.val():0)+1);
+    
+    // Update total messages counter
+    const totalSnap = await get(ref(db,'stats/totalMessages'));
+    await set(ref(db,'stats/totalMessages'),(totalSnap.exists()?totalSnap.val():0)+1);
+    
+    // Today's count
+    const todayRef = ref(db, `stats/today/${today}`);
+    const todaySnap = await get(todayRef);
+    await set(todayRef, (todaySnap.exists()?todaySnap.val():0)+1);
+    
+    loadChatList();
+  } catch(e) {
+    typingEl.remove();
+    renderMessage('ai', `❌ Error: ${e.message}. Pastikan API key valid dan coba lagi.`, Date.now());
+    showToast('Gagal menghubungi AI: '+e.message, 'error');
+  }
+  isTyping=false;
+  document.getElementById('sendBtn').disabled=false;
+};
+
+function renderMessage(role, content, ts) {
+  const msgs = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = `message-row ${role==='user'?'user':'ai'}`;
+  const isAI = role!=='user';
+  const initials = isAI ? (appSettings.aiEmoji||'🤖') : currentUser?.username?.[0]?.toUpperCase()||'U';
+  const avatarStyle = isAI ? 'class="msg-avatar ai"' : `class="msg-avatar user-msg" style="background:${currentUser?.avatarColor||'linear-gradient(135deg,#ff2d7e,#7b2fff)'}"`;
+  const processedContent = isAI && appSettings.markdownMode!==false ? parseMarkdown(content) : escapeHtml(content);
+  row.innerHTML = `
+    <div ${avatarStyle}>${initials}</div>
+    <div class="msg-bubble">
+      ${processedContent}
+      <div class="msg-meta">
+        <span class="msg-time">${formatDate(ts)}</span>
+        <button class="msg-copy" onclick="copyMsg(this)" title="Salin"><i class="fas fa-copy"></i></button>
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+window.copyMsg = (btn) => {
+  const bubble = btn.closest('.msg-bubble');
+  const text = bubble.innerText.replace(/\n.*$/, '').trim();
+  navigator.clipboard.writeText(text).then(()=>showToast('Disalin!','success'));
+};
+
+function addTypingIndicator() {
+  const msgs = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = 'message-row ai';
+  row.innerHTML = `
+    <div class="msg-avatar ai">${appSettings.aiEmoji||'🤖'}</div>
+    <div class="msg-bubble" style="padding:8px 16px">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+      </div>
+    </div>`;
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  return row;
+}
+
+window.clearCurrentChat = async () => {
+  if(!confirm('Hapus semua pesan di chat ini?')) return;
+  currentMessages=[];
+  if(currentChatId) await remove(ref(db,`chats/${currentUser.uid}/${currentChatId}`));
+  newChat();
+  showToast('Chat dihapus','success');
+};
+
+window.exportCurrentChat = () => {
+  if(!currentMessages.length) {showToast('Tidak ada pesan untuk diexport','error');return;}
+  const text = currentMessages.map(m=>`[${m.role==='user'?currentUser.username:'AI'}] ${formatDate(m.timestamp)}:\n${m.content}`).join('\n\n---\n\n');
+  const blob = new Blob([text],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`chat-${Date.now()}.txt`;
+  a.click();
+  showToast('Chat diekspor!','success');
+};
+
+window.toggleSidebar = () => {
+  document.getElementById('chatSidebar').classList.toggle('open');
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PROFILE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.openProfile = () => {
+  document.getElementById('profileUsernameInput').value = currentUser.username;
+  document.getElementById('profileAvatarPreview').style.background = currentUser.avatarColor||'linear-gradient(135deg,#7b2fff,#00d4ff)';
+  document.getElementById('profileAvatarPreview').textContent = currentUser.username[0].toUpperCase();
+  openModal('profileModal');
+};
+
+window.selectAvatarColor = (el) => {
+  document.querySelectorAll('#avatarColors .color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  const c = el.dataset.color;
+  document.getElementById('profileAvatarPreview').style.background = c;
+  document.getElementById('profileAvatarPreview').textContent = document.getElementById('profileUsernameInput').value[0]?.toUpperCase()||'U';
+};
+
+window.saveProfile = async () => {
+  const username = document.getElementById('profileUsernameInput').value.trim();
+  const newPass = document.getElementById('profileNewPass').value;
+  const selected = document.querySelector('#avatarColors .color-swatch.selected');
+  const color = selected ? selected.dataset.color : currentUser.avatarColor;
+  
+  if(!username) {showAlert('profileAlert','Username tidak boleh kosong','error');return;}
+  
+  const updates = {username, avatarColor:color};
+  if(newPass) {
+    if(newPass.length<6){showAlert('profileAlert','Password min 6 karakter','error');return;}
+    updates.passwordHash = await sha256(newPass);
+  }
+  await update(ref(db,`users/${currentUser.uid}`), updates);
+  currentUser = {...currentUser, ...updates};
+  setSession(currentUser);
+  document.getElementById('sidebarUsername').textContent = username;
+  document.getElementById('sidebarAvatar').style.background = color;
+  document.getElementById('sidebarAvatar').textContent = username[0].toUpperCase();
+  showAlert('profileAlert','Profil disimpan!','success');
+  showToast('Profil berhasil diperbarui','success');
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ADMIN FUNCTIONS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.showAdminPanel = (id) => {
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(n=>n.classList.remove('active'));
+  const panel = document.getElementById(`panel-${id}`);
+  if(panel) panel.classList.add('active');
+  // Highlight nav
+  document.querySelectorAll('.admin-nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
+  });
+  const titles = {
+    dashboard:'📊 DASHBOARD',apiconfig:'🔑 API & MODEL',aipersona:'🤖 AI PERSONA',aimode:'⚙️ MODE AI',
+    users:'👥 PENGGUNA',chatmonitor:'👁️ MONITOR CHAT',announcements:'📣 PENGUMUMAN',
+    ratelimit:'⏱️ RATE LIMIT',blacklist:'🚫 BLACKLIST',jailbreaklog:'🛡️ LOG JAILBREAK',
+    sitesettings:'🌐 PENGATURAN SITUS',appearance:'🎨 TAMPILAN',stats:'📈 STATISTIK',
+    exportdata:'📦 EXPORT DATA',activitylog:'📋 LOG AKTIVITAS',maintenance:'🔧 MAINTENANCE',
+    adminpassword:'🔐 GANTI PASSWORD'
+  };
+  document.getElementById('adminPanelTitle').textContent = titles[id]||'ADMIN PANEL';
+  // Load panel data
+  if(id==='dashboard') loadDashboard();
+  else if(id==='users') loadUsers();
+  else if(id==='chatmonitor') loadChatMonitor();
+  else if(id==='announcements') loadAnnouncements();
+  else if(id==='blacklist') loadBlacklist();
+  else if(id==='jailbreaklog') loadJailbreakLog();
+  else if(id==='activitylog') loadActivityLog();
+  else if(id==='ratelimit') loadRateLimitPanel();
+  else if(id==='stats') loadDetailStats();
+  else if(id==='apiconfig') loadApiConfigPanel();
+  else if(id==='aipersona') loadPersonaPanel();
+  else if(id==='aimode') loadAiModePanel();
+  else if(id==='sitesettings') loadSiteSettingsPanel();
+  else if(id==='maintenance') loadMaintenancePanel();
+};
+
+async function loadAdminData() {
+  await loadAppSettings();
+  loadDashboard();
+  // Count users
+  const snap = await get(ref(db,'users'));
+  const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+  document.getElementById('userCountBadge').textContent = count;
+}
+
+async function logAdminActivity(user, action, msg) {
+  await push(ref(db,'adminLogs'),{user,action,message:msg,timestamp:Date.now()});
+}
+
+// DASHBOARD
+async function loadDashboard() {
+  const [usersSnap, statsSnap, jailSnap] = await Promise.all([
+    get(ref(db,'users')),
+    get(ref(db,'stats')),
+    get(ref(db,'jailbreakLogs'))
+  ]);
+  
+  const users = usersSnap.exists() ? Object.values(usersSnap.val()) : [];
+  const totalUsers = users.length;
+  const bannedUsers = users.filter(u=>u.banned).length;
+  const totalChats = statsSnap.exists() ? (statsSnap.val().totalMessages||0) : 0;
+  const jailCount = jailSnap.exists() ? Object.keys(jailSnap.val()).length : 0;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const todaySnap = await get(ref(db,`stats/today/${today}`));
+  const todayMsgs = todaySnap.exists() ? todaySnap.val() : 0;
+  
+  document.getElementById('stat-totalUsers').textContent = totalUsers;
+  document.getElementById('stat-totalChats').textContent = totalChats;
+  document.getElementById('stat-todayMessages').textContent = todayMsgs;
+  document.getElementById('stat-bannedUsers').textContent = bannedUsers;
+  document.getElementById('stat-jailbreaks').textContent = jailCount;
+  document.getElementById('activeModel').textContent = appSettings.model||'arcee-ai/trinity-large-preview:free';
+  document.getElementById('maintenanceStatus').innerHTML = appSettings.maintenanceMode ? '<span class="status-dot banned"></span>Aktif' : '<span class="status-dot online"></span>Nonaktif';
+  
+  if(jailCount>0) { document.getElementById('jailbreakBadge').style.display='inline'; document.getElementById('jailbreakBadge').textContent=jailCount; }
+  
+  // Recent users table
+  const sorted = users.sort((a,b)=>b.createdAt-a.createdAt).slice(0,5);
+  const tbody = document.getElementById('recentUsersTable');
+  tbody.innerHTML = sorted.map(u=>`
+    <tr>
+      <td>${escapeHtml(u.username)}</td>
+      <td><span class="badge-role ${u.banned?'banned':u.role}">${u.banned?'BANNED':u.role.toUpperCase()}</span></td>
+      <td>${formatDate(u.createdAt)}</td>
+      <td><span class="status-dot ${u.banned?'banned':'online'}"></span>${u.banned?'Banned':'Aktif'}</td>
+    </tr>`).join('');
+  
+  // Recent activity
+  const logSnap = await get(ref(db,'adminLogs'));
+  const logsDiv = document.getElementById('dashRecentActivity');
+  if(logSnap.exists()) {
+    const logs = Object.values(logSnap.val()).sort((a,b)=>b.timestamp-a.timestamp).slice(0,6);
+    logsDiv.innerHTML = logs.map(l=>`
+      <div class="log-entry">
+        <span class="log-time">${formatDate(l.timestamp)}</span>
+        <span class="log-icon">${l.action==='login'?'🟢':l.action==='logout'?'🔴':'⚡'}</span>
+        <span class="log-msg">${escapeHtml(l.message)}</span>
+      </div>`).join('');
+  } else { logsDiv.innerHTML='<div style="color:var(--text-dim);font-size:13px;">Belum ada aktivitas.</div>'; }
+}
+
+// USERS
+let allUsers = [];
+async function loadUsers() {
+  const snap = await get(ref(db,'users'));
+  allUsers = snap.exists() ? Object.values(snap.val()) : [];
+  renderUsersTable(allUsers);
+}
+
+function renderUsersTable(users) {
+  const tbody = document.getElementById('usersTable');
+  if(!users.length) {tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-dim);">Tidak ada pengguna</td></tr>';return;}
+  tbody.innerHTML = users.map(u=>`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:8px;background:${u.avatarColor||'var(--cyan-dim)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${u.username[0]?.toUpperCase()}</div>
+          ${escapeHtml(u.username)}
+        </div>
+      </td>
+      <td><span class="badge-role ${u.banned?'banned':u.role}">${u.banned?'BANNED':u.role.toUpperCase()}</span></td>
+      <td>${u.messageCount||0}</td>
+      <td>${formatDate(u.createdAt)}</td>
+      <td><span class="status-dot ${u.banned?'banned':'online'}"></span>${u.banned?'Banned':'Aktif'}</td>
+      <td>
+        ${u.role!=='admin'?`<button class="action-btn ban" onclick="toggleBan('${u.uid}',${!u.banned})">${u.banned?'Unban':'Ban'}</button>`:''}
+        ${u.role!=='admin'?`<button class="action-btn del" onclick="deleteUser('${u.uid}','${escapeHtml(u.username)}')">Hapus</button>`:''}
+        <button class="action-btn view" onclick="viewUserChat('${u.uid}','${escapeHtml(u.username)}')">Chat</button>
+      </td>
+    </tr>`).join('');
+}
+
+window.filterUsers = () => {
+  const q = document.getElementById('userSearchInput').value.toLowerCase();
+  const role = document.getElementById('userRoleFilter').value;
+  let filtered = allUsers;
+  if(q) filtered = filtered.filter(u=>u.username.toLowerCase().includes(q));
+  if(role==='banned') filtered = filtered.filter(u=>u.banned);
+  else if(role) filtered = filtered.filter(u=>!u.banned&&u.role===role);
+  renderUsersTable(filtered);
+};
+
+window.toggleBan = async (uid, ban) => {
+  await update(ref(db,`users/${uid}`),{banned:ban});
+  await logAdminActivity('admin123#','ban',`User ${uid} ${ban?'dibanned':'di-unban'}`);
+  showToast(ban?'User dibanned':'User di-unban','success');
+  loadUsers();
+  loadDashboard();
+};
+
+window.deleteUser = async (uid, uname) => {
+  if(!confirm(`Hapus user "${uname}" beserta semua data chat? Tindakan ini tidak bisa dibatalkan!`)) return;
+  await remove(ref(db,`users/${uid}`));
+  await remove(ref(db,`chats/${uid}`));
+  await logAdminActivity('admin123#','delete-user',`Hapus user: ${uname}`);
+  showToast('User dihapus','success');
+  loadUsers();
+};
+
+window.viewUserChat = async (uid, uname) => {
+  const snap = await get(ref(db,`chats/${uid}`));
+  const content = document.getElementById('chatDetailContent');
+  if(!snap.exists()){content.innerHTML='<p style="color:var(--text-dim)">Tidak ada riwayat chat.</p>';openModal('chatDetailModal');return;}
+  let html='';
+  snap.forEach(c=>{
+    const chat=c.val();
+    html+=`<div style="margin-bottom:16px;"><div style="font-size:12px;color:var(--cyan);margin-bottom:8px;font-weight:700;">${escapeHtml(chat.title||'Chat')} — ${formatDate(chat.updatedAt)}</div>`;
+    (chat.messages||[]).forEach(m=>{
+      html+=`<div style="margin-bottom:8px;padding:8px;background:var(--bg-input);border-radius:6px;"><span style="font-size:11px;color:${m.role==='user'?'var(--purple)':'var(--cyan)'};">[${m.role==='user'?uname:'AI'}]</span><div style="font-size:13px;margin-top:4px;">${escapeHtml(m.content).substring(0,200)}${m.content.length>200?'…':''}</div></div>`;
+    });
+    html+='</div>';
+  });
+  content.innerHTML = html;
+  openModal('chatDetailModal');
+};
+
+// CHAT MONITOR
+async function loadChatMonitor() {
+  const snap = await get(ref(db,'users'));
+  const list = document.getElementById('chatMonitorList');
+  if(!snap.exists()){list.innerHTML='<p style="color:var(--text-dim)">Tidak ada pengguna.</p>';return;}
+  const users = Object.values(snap.val());
+  list.innerHTML = users.map(u=>`
+    <div class="chat-monitor-user" onclick="viewUserChat('${u.uid}','${escapeHtml(u.username)}')">
+      <div style="width:36px;height:36px;border-radius:9px;background:${u.avatarColor||'var(--cyan-dim)'};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">${u.username[0]?.toUpperCase()}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;">${escapeHtml(u.username)}</div><div style="font-size:12px;color:var(--text-dim);">${u.messageCount||0} pesan total</div></div>
+      <i class="fas fa-chevron-right" style="color:var(--text-dim);font-size:13px;"></i>
+    </div>`).join('');
+}
+
+// ANNOUNCEMENTS
+async function loadAnnouncements() {
+  const snap = await get(ref(db,'announcements'));
+  const list = document.getElementById('announcementsList');
+  if(!snap.exists()){list.innerHTML='<p style="color:var(--text-dim)">Belum ada pengumuman.</p>';return;}
+  const items = [];
+  snap.forEach(c=>items.push({id:c.key,...c.val()}));
+  items.sort((a,b)=>b.createdAt-a.createdAt);
+  list.innerHTML = items.map(a=>`
+    <div class="ann-item">
+      <div style="font-size:16px">${a.active?'📢':'📭'}</div>
+      <div style="flex:1">
+        <div class="ann-msg">${escapeHtml(a.message)}</div>
+        <div class="ann-date">${formatDate(a.createdAt)} · ${a.active?'<span style="color:var(--green)">Aktif</span>':'<span style="color:var(--text-dim)">Nonaktif</span>'}</div>
+      </div>
+      <button class="action-btn ${a.active?'ban':'green'}" onclick="toggleAnn('${a.id}',${!a.active})">${a.active?'Nonaktifkan':'Aktifkan'}</button>
+      <button class="action-btn del" onclick="deleteAnn('${a.id}')">Hapus</button>
+    </div>`).join('');
+}
+
+window.addAnnouncement = async () => {
+  const msg = document.getElementById('annMsgInput').value.trim();
+  const active = document.getElementById('annActiveToggle').classList.contains('on');
+  if(!msg){showAlert('annAlert','Isi pesan pengumuman!','error');return;}
+  await push(ref(db,'announcements'),{message:msg,active,createdAt:Date.now()});
+  await logAdminActivity('admin123#','announcement',`Pengumuman baru: ${msg.substring(0,50)}`);
+  document.getElementById('annMsgInput').value='';
+  showAlert('annAlert','Pengumuman berhasil dikirim!','success');
+  showToast('Pengumuman dikirim','success');
+  loadAnnouncements();
+};
+
+window.toggleAnn = async (id, active) => {
+  await update(ref(db,`announcements/${id}`),{active});
+  loadAnnouncements();
+};
+
+window.deleteAnn = async (id) => {
+  await remove(ref(db,`announcements/${id}`));
+  showToast('Pengumuman dihapus','success');
+  loadAnnouncements();
+};
+
+// BLACKLIST
+async function loadBlacklist() {
+  const snap = await get(ref(db,'settings/blacklist'));
+  const words = snap.exists() ? (snap.val()||[]) : [];
+  renderBlacklistTags(words);
+  
+  const builtinEl = document.getElementById('builtinPatterns');
+  const patterns = ['ignore instructions','jailbreak','DAN mode','bypass restrictions','developer mode','sudo mode','no restrictions','override system','act as','pretend to be','prompt injection'];
+  builtinEl.innerHTML = patterns.map(p=>`<span style="padding:4px 10px;background:rgba(255,204,0,0.1);border:1px solid rgba(255,204,0,0.2);border-radius:20px;font-size:12px;color:var(--yellow);">${p}</span>`).join('');
+}
+
+function renderBlacklistTags(words) {
+  const container = document.getElementById('blacklistTags');
+  container.innerHTML = (words||[]).map((w,i)=>`
+    <div class="blacklist-tag">
+      ${escapeHtml(w)}
+      <button onclick="removeBlacklistWord(${i})">✕</button>
+    </div>`).join('');
+}
+
+window.addBlacklistWord = async () => {
+  const input = document.getElementById('blacklistInput');
+  const word = input.value.trim().toLowerCase();
+  if(!word) return;
+  const snap = await get(ref(db,'settings/blacklist'));
+  const words = snap.exists() ? (snap.val()||[]) : [];
+  if(!words.includes(word)) {
+    words.push(word);
+    await set(ref(db,'settings/blacklist'),words);
+    appSettings.blacklist = words;
+    showToast('Kata ditambahkan','success');
+  }
+  input.value='';
+  renderBlacklistTags(words);
+};
+
+window.removeBlacklistWord = async (idx) => {
+  const snap = await get(ref(db,'settings/blacklist'));
+  const words = snap.exists() ? (snap.val()||[]) : [];
+  words.splice(idx,1);
+  await set(ref(db,'settings/blacklist'),words);
+  appSettings.blacklist = words;
+  renderBlacklistTags(words);
+  showToast('Kata dihapus','success');
+};
+
+// JAILBREAK LOG
+async function loadJailbreakLog() {
+  const snap = await get(ref(db,'jailbreakLogs'));
+  const list = document.getElementById('jailbreakLogList');
+  if(!snap.exists()){list.innerHTML='<p style="color:var(--green);font-size:13px;">✅ Tidak ada percobaan jailbreak terdeteksi.</p>';return;}
+  const logs=[];
+  snap.forEach(c=>logs.push({id:c.key,...c.val()}));
+  logs.sort((a,b)=>b.timestamp-a.timestamp);
+  list.innerHTML = logs.map(l=>`
+    <div class="log-entry">
+      <span class="log-time">${formatDate(l.timestamp)}</span>
+      <span class="log-icon">🚨</span>
+      <div class="log-msg"><strong style="color:var(--yellow)">${escapeHtml(l.username)}</strong>: ${escapeHtml(l.message)}</div>
+    </div>`).join('');
+}
+
+window.clearJailbreakLog = async () => {
+  if(!confirm('Hapus semua log jailbreak?')) return;
+  await remove(ref(db,'jailbreakLogs'));
+  document.getElementById('jailbreakBadge').style.display='none';
+  loadJailbreakLog();
+  showToast('Log dihapus','success');
+};
+
+window.exportJailbreakLog = async () => {
+  const snap = await get(ref(db,'jailbreakLogs'));
+  if(!snap.exists()){showToast('Tidak ada data','error');return;}
+  const logs=[];
+  snap.forEach(c=>logs.push(c.val()));
+  downloadJSON(logs,'jailbreak-logs.json');
+  showToast('Log diekspor','success');
+};
+
+// RATE LIMIT
+async function loadRateLimitPanel() {
+  const rl = appSettings.rateLimitPerDay || 100;
+  document.getElementById('rateLimitRange').value = rl;
+  document.getElementById('rateLimitVal').textContent = rl;
+  document.getElementById('cooldownInput').value = appSettings.cooldown || 2;
+  
+  // User usage today
+  const today = new Date().toISOString().split('T')[0];
+  const usersSnap = await get(ref(db,'users'));
+  const list = document.getElementById('userUsageList');
+  if(!usersSnap.exists()){list.innerHTML='';return;}
+  const users = Object.values(usersSnap.val());
+  const usagePromises = users.map(u=>get(ref(db,`dailyUsage/${u.uid}/${today}`)));
+  const usages = await Promise.all(usagePromises);
+  list.innerHTML = users.map((u,i)=>{
+    const used = usages[i].exists()?usages[i].val():0;
+    const pct = Math.min((used/rl)*100,100);
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span>${escapeHtml(u.username)}</span>
+        <span style="color:var(--cyan);font-family:'Share Tech Mono',monospace;">${used}/${rl}</span>
+      </div>
+      <div class="rate-bar"><div class="rate-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+window.saveRateLimit = async () => {
+  const rl = parseInt(document.getElementById('rateLimitRange').value);
+  const cd = parseInt(document.getElementById('cooldownInput').value);
+  await update(ref(db,'settings'),{rateLimitPerDay:rl,cooldown:cd});
+  appSettings.rateLimitPerDay=rl; appSettings.cooldown=cd;
+  await logAdminActivity('admin123#','settings','Update rate limit: '+rl+' pesan/hari');
+  showAlert('rateLimitAlert','Rate limit disimpan!','success');
+  showToast('Rate limit diperbarui','success');
+};
+
+// API CONFIG
+function loadApiConfigPanel() {
+  document.getElementById('apiKeyInput').value = appSettings.apiKey||'';
+  document.getElementById('modelInput').value = appSettings.model||'arcee-ai/trinity-large-preview:free';
+  document.getElementById('maxTokensInput').value = appSettings.maxTokens||2048;
+  document.getElementById('tempRange').value = appSettings.temperature||0.7;
+  document.getElementById('tempVal').textContent = appSettings.temperature||0.7;
+}
+
+window.toggleApiVisibility = () => {
+  const input = document.getElementById('apiKeyInput');
+  const icon = document.getElementById('apiEyeIcon');
+  if(input.type==='password'){input.type='text';icon.className='fas fa-eye-slash';}
+  else{input.type='password';icon.className='fas fa-eye';}
+};
+
+window.saveApiConfig = async () => {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const model = document.getElementById('modelInput').value.trim();
+  const maxTokens = parseInt(document.getElementById('maxTokensInput').value);
+  const temperature = parseFloat(document.getElementById('tempRange').value);
+  if(!key){showAlert('apiConfigAlert','Masukkan API key!','error');return;}
+  await update(ref(db,'settings'),{apiKey:key,model,maxTokens,temperature});
+  appSettings = {...appSettings,apiKey:key,model,maxTokens,temperature};
+  await logAdminActivity('admin123#','api-config','Update API config: model='+model);
+  showAlert('apiConfigAlert','Konfigurasi API disimpan!','success');
+  showToast('API config disimpan','success');
+  document.getElementById('activeModel').textContent = model;
+};
+
+window.testApi = async () => {
+  const msg = document.getElementById('testMsgInput').value.trim();
+  const resultEl = document.getElementById('testApiResult');
+  if(!appSettings.apiKey){resultEl.style.display='block';resultEl.textContent='❌ API key belum diset!';resultEl.style.color='var(--red)';return;}
+  resultEl.style.display='block';resultEl.textContent='⏳ Menghubungi API...';resultEl.style.color='var(--text-secondary)';
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${appSettings.apiKey}`,'HTTP-Referer':window.location.href,'X-Title':'NexusAI Test'},
+      body:JSON.stringify({model:appSettings.model||'arcee-ai/trinity-large-preview:free',messages:[{role:'user',content:msg}],max_tokens:500})
+    });
+    const data = await resp.json();
+    if(data.choices?.[0]?.message?.content) {
+      resultEl.textContent='✅ API Berhasil!\n\n'+data.choices[0].message.content;
+      resultEl.style.color='var(--green)';
+    } else {
+      resultEl.textContent='❌ Error: '+(data.error?.message||JSON.stringify(data));
+      resultEl.style.color='var(--red)';
+    }
+  } catch(e) {resultEl.textContent='❌ Error: '+e.message;resultEl.style.color='var(--red)';}
+};
+
+// PERSONA
+function loadPersonaPanel() {
+  document.getElementById('aiNameInput').value = appSettings.aiName||'NexusAI';
+  document.getElementById('systemPromptInput').value = appSettings.systemPrompt||'';
+  document.getElementById('welcomeMsgInput').value = appSettings.welcomeMessage||'';
+  document.getElementById('aiEmojiInput').value = appSettings.aiEmoji||'🤖';
+}
+
+window.savePersona = async () => {
+  const aiName = document.getElementById('aiNameInput').value.trim();
+  const systemPrompt = document.getElementById('systemPromptInput').value.trim();
+  const welcomeMessage = document.getElementById('welcomeMsgInput').value.trim();
+  const aiEmoji = document.getElementById('aiEmojiInput').value.trim()||'🤖';
+  if(!systemPrompt){showAlert('personaAlert','System prompt tidak boleh kosong!','error');return;}
+  await update(ref(db,'settings'),{aiName,systemPrompt,welcomeMessage,aiEmoji});
+  Object.assign(appSettings,{aiName,systemPrompt,welcomeMessage,aiEmoji});
+  await logAdminActivity('admin123#','persona','Update AI persona: '+aiName);
+  showAlert('personaAlert','Persona AI disimpan!','success');
+  showToast('Persona disimpan','success');
+};
+
+window.applyPersonaTemplate = (type) => {
+  const templates = {
+    assistant:{name:'NexusAI',emoji:'🤖',prompt:'Kamu adalah NexusAI, asisten AI canggih yang cerdas, ramah, dan sangat membantu. Kamu berbicara dalam Bahasa Indonesia yang santun dan profesional. Jawab dengan akurat, informatif, dan menarik.'},
+    teacher:{name:'Guru AI',emoji:'👨‍🏫',prompt:'Kamu adalah seorang guru dan tutor yang sabar, pandai, dan penuh semangat. Kamu menjelaskan konsep dengan jelas menggunakan contoh yang mudah dipahami. Kamu selalu memotivasi siswa untuk terus belajar.'},
+    coder:{name:'CodeMaster AI',emoji:'💻',prompt:'Kamu adalah expert programmer dengan keahlian dalam berbagai bahasa pemrograman. Kamu membantu debugging, review kode, arsitektur sistem, dan best practices. Selalu berikan contoh kode yang bersih dan terdokumentasi.'},
+    creative:{name:'Kreatif AI',emoji:'🎨',prompt:'Kamu adalah asisten kreatif yang penuh imajinasi. Kamu membantu menulis cerita, puisi, script, brainstorming ide kreatif, dan konten marketing yang menarik. Gayamu ekspresif dan penuh warna.'},
+    analyst:{name:'Analis AI',emoji:'📊',prompt:'Kamu adalah analis data dan bisnis yang handal. Kamu membantu interpretasi data, membuat laporan, analisis statistik, dan memberikan insight bisnis yang berharga. Kamu presisi, faktual, dan berbasis data.'},
+    friend:{name:'Buddy AI',emoji:'😊',prompt:'Kamu adalah teman ngobrol yang asyik, santai, dan menyenangkan! Kamu berbicara dengan bahasa gaul yang friendly, suka bercanda, tapi tetap informatif dan membantu. Bikin suasana jadi lebih cair!'}
+  };
+  const t = templates[type];
+  if(!t) return;
+  document.getElementById('aiNameInput').value = t.name;
+  document.getElementById('systemPromptInput').value = t.prompt;
+  document.getElementById('aiEmojiInput').value = t.emoji;
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  event.target.closest('.model-card').classList.add('selected');
+  showToast('Template diterapkan! Klik Simpan Persona','info');
+};
+
+// AI MODE
+function loadAiModePanel() {
+  const setToggle = (id, key) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = appSettings[key];
+    el.className = `toggle ${val===false?'off':'on'}`;
+  };
+  setToggle('toggleStream','streamMode');
+  setToggle('toggleMarkdown','markdownMode');
+  setToggle('toggleHistory','historyMode');
+  setToggle('toggleSafeMode','safeMode');
+  setToggle('toggleJailbreakProt','jailbreakProtection');
+  setToggle('toggleDebug','debugMode');
+  document.getElementById('contextRange').value = appSettings.contextLength||10;
+  document.getElementById('contextVal').textContent = appSettings.contextLength||10;
+  document.getElementById('maxCharInput').value = appSettings.maxCharPerMsg||4000;
+}
+
+window.toggleFeature = (el, key) => {
+  el.classList.toggle('on');
+  el.classList.toggle('off');
+};
+
+window.saveAiMode = async () => {
+  const getToggle = id => document.getElementById(id)?.classList.contains('on');
+  const updates = {
+    streamMode: getToggle('toggleStream'),
+    markdownMode: getToggle('toggleMarkdown'),
+    historyMode: getToggle('toggleHistory'),
+    safeMode: getToggle('toggleSafeMode'),
+    jailbreakProtection: getToggle('toggleJailbreakProt'),
+    debugMode: getToggle('toggleDebug'),
+    contextLength: parseInt(document.getElementById('contextRange').value),
+    maxCharPerMsg: parseInt(document.getElementById('maxCharInput').value)
+  };
+  await update(ref(db,'settings'),updates);
+  Object.assign(appSettings,updates);
+  await logAdminActivity('admin123#','ai-mode','Update AI mode settings');
+  showAlert('aiModeAlert','Mode AI disimpan!','success');
+  showToast('Mode AI diperbarui','success');
+};
+
+// SITE SETTINGS
+function loadSiteSettingsPanel() {
+  document.getElementById('siteNameInput').value = appSettings.siteName||'NexusAI';
+  document.getElementById('siteTaglineInput').value = appSettings.siteTagline||'';
+  const regToggle = document.getElementById('toggleRegistration');
+  regToggle.className = `toggle ${appSettings.allowRegistration?'on':'off'}`;
+}
+
+window.saveSiteSettings = async () => {
+  const siteName = document.getElementById('siteNameInput').value.trim();
+  const siteTagline = document.getElementById('siteTaglineInput').value.trim();
+  const allowRegistration = document.getElementById('toggleRegistration').classList.contains('on');
+  await update(ref(db,'settings'),{siteName,siteTagline,allowRegistration});
+  Object.assign(appSettings,{siteName,siteTagline,allowRegistration});
+  await logAdminActivity('admin123#','site-settings','Update pengaturan situs');
+  showAlert('siteSettingsAlert','Pengaturan situs disimpan!','success');
+  showToast('Pengaturan disimpan','success');
+};
+
+// MAINTENANCE
+function loadMaintenancePanel() {
+  const toggle = document.getElementById('maintenanceToggle');
+  toggle.className = `toggle ${appSettings.maintenanceMode?'on':'off'}`;
+  document.getElementById('maintenanceMsgInput').value = appSettings.maintenanceMsg||'';
+}
+
+window.toggleMaintenance = async (el) => {
+  el.classList.toggle('on');
+  el.classList.toggle('off');
+};
+
+window.saveMaintenance = async () => {
+  const active = document.getElementById('maintenanceToggle').classList.contains('on');
+  const msg = document.getElementById('maintenanceMsgInput').value.trim();
+  await update(ref(db,'settings'),{maintenanceMode:active,maintenanceMsg:msg});
+  appSettings.maintenanceMode=active; appSettings.maintenanceMsg=msg;
+  await logAdminActivity('admin123#','maintenance',`Maintenance mode ${active?'diaktifkan':'dinonaktifkan'}`);
+  showAlert('maintenanceAlert',`Maintenance mode ${active?'aktif':'nonaktif'}!`,active?'error':'success');
+  showToast(`Maintenance mode ${active?'aktif':'nonaktif'}`,'success');
+  document.getElementById('maintenanceStatus').innerHTML = active ? '<span class="status-dot banned"></span>Aktif' : '<span class="status-dot online"></span>Nonaktif';
+};
+
+// CHANGE ADMIN PASSWORD
+window.changeAdminPassword = async () => {
+  const oldPass = document.getElementById('oldPassInput').value;
+  const newPass = document.getElementById('newPassInput').value;
+  const newPass2 = document.getElementById('newPass2Input').value;
+  if(!oldPass||!newPass||!newPass2){showAlert('adminPassAlert','Isi semua field!','error');return;}
+  if(newPass!==newPass2){showAlert('adminPassAlert','Password baru tidak cocok!','error');return;}
+  if(newPass.length<6){showAlert('adminPassAlert','Password min. 6 karakter!','error');return;}
+  const oldHash = await sha256(oldPass);
+  const snap = await get(ref(db,'users/admin_root'));
+  if(!snap.exists()||snap.val().passwordHash!==oldHash){showAlert('adminPassAlert','Password lama salah!','error');return;}
+  const newHash = await sha256(newPass);
+  await update(ref(db,'users/admin_root'),{passwordHash:newHash});
+  await logAdminActivity('admin123#','change-password','Admin mengganti password');
+  showAlert('adminPassAlert','Password berhasil diubah!','success');
+  showToast('Password diperbarui','success');
+  document.getElementById('oldPassInput').value='';
+  document.getElementById('newPassInput').value='';
+  document.getElementById('newPass2Input').value='';
+};
+
+// APPEARANCE
+window.selectTheme = (theme, el) => {
+  document.querySelectorAll('#themeSwatches .color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+};
+
+window.saveAppearance = async () => {
+  const selected = document.querySelector('#themeSwatches .color-swatch.selected');
+  const customCss = document.getElementById('customCssInput').value;
+  await update(ref(db,'settings'),{customCss});
+  if(customCss) {
+    let styleEl = document.getElementById('customStyles');
+    if(!styleEl){styleEl=document.createElement('style');styleEl.id='customStyles';document.head.appendChild(styleEl);}
+    styleEl.textContent = customCss;
+  }
+  showAlert('appearanceAlert','Tampilan disimpan!','success');
+  showToast('Tampilan diperbarui','success');
+};
+
+// DETAIL STATS
+async function loadDetailStats() {
+  const [usersSnap, statsSnap] = await Promise.all([get(ref(db,'users')),get(ref(db,'stats'))]);
+  const users = usersSnap.exists() ? Object.values(usersSnap.val()) : [];
+  const totalMsgs = statsSnap.exists() ? (statsSnap.val().totalMessages||0) : 0;
+  
+  const el = document.getElementById('detailStats');
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+      <div style="padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;text-align:center;">
+        <div style="font-size:22px;font-family:'Orbitron',monospace;color:var(--cyan)">${users.length}</div>
+        <div style="font-size:12px;color:var(--text-dim)">Total Pengguna</div>
+      </div>
+      <div style="padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;text-align:center;">
+        <div style="font-size:22px;font-family:'Orbitron',monospace;color:var(--purple)">${totalMsgs}</div>
+        <div style="font-size:12px;color:var(--text-dim)">Total Pesan Terkirim</div>
+      </div>
+      <div style="padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:9px;text-align:center;">
+        <div style="font-size:22px;font-family:'Orbitron',monospace;color:var(--green)">${users.filter(u=>!u.banned).length}</div>
+        <div style="font-size:12px;color:var(--text-dim)">Pengguna Aktif</div>
+      </div>
+    </div>`;
+  
+  // Top users
+  const topEl = document.getElementById('topUsersStats');
+  const sorted = users.sort((a,b)=>(b.messageCount||0)-(a.messageCount||0)).slice(0,5);
+  const max = sorted[0]?.messageCount||1;
+  topEl.innerHTML = sorted.map((u,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="width:24px;height:24px;border-radius:6px;background:var(--cyan-dim);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--cyan);font-weight:700;">${i+1}</div>
+      <div style="width:30px;height:30px;border-radius:8px;background:${u.avatarColor||'var(--cyan-dim)'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${u.username[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;">${escapeHtml(u.username)}</div>
+        <div class="rate-bar" style="margin-top:4px;"><div class="rate-fill" style="width:${Math.max((u.messageCount||0)/max*100,2)}%;background:linear-gradient(90deg,var(--purple),var(--cyan))"></div></div>
+      </div>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan)">${u.messageCount||0}</span>
+    </div>`).join('');
+}
+
+// ACTIVITY LOG
+async function loadActivityLog() {
+  const snap = await get(ref(db,'adminLogs'));
+  const list = document.getElementById('activityLogList');
+  if(!snap.exists()){list.innerHTML='<p style="color:var(--text-dim)">Belum ada aktivitas.</p>';return;}
+  const logs=[];
+  snap.forEach(c=>logs.push({id:c.key,...c.val()}));
+  logs.sort((a,b)=>b.timestamp-a.timestamp);
+  list.innerHTML = logs.map(l=>`
+    <div class="log-entry">
+      <span class="log-time">${formatDate(l.timestamp)}</span>
+      <span class="log-icon">⚡</span>
+      <div class="log-msg"><strong style="color:var(--cyan)">${escapeHtml(l.user||'system')}</strong> [${l.action}]: ${escapeHtml(l.message)}</div>
+    </div>`).join('');
+}
+
+window.clearAdminLog = async () => {
+  if(!confirm('Hapus semua log aktivitas?')) return;
+  await remove(ref(db,'adminLogs'));
+  loadActivityLog();
+  showToast('Log dihapus','success');
+};
+
+// EXPORT
+window.exportUsers = async () => {
+  const snap = await get(ref(db,'users'));
+  if(!snap.exists()){showToast('Tidak ada data','error');return;}
+  const users=[];
+  snap.forEach(c=>{const v=c.val();delete v.passwordHash;users.push(v);});
+  downloadJSON(users,'users-export.json');
+  showToast('Data pengguna diekspor','success');
+};
+
+window.exportAllChats = async () => {
+  const snap = await get(ref(db,'chats'));
+  if(!snap.exists()){showToast('Tidak ada data','error');return;}
+  const chats={};
+  snap.forEach(c=>{chats[c.key]=c.val();});
+  downloadJSON(chats,'chats-export.json');
+  showToast('Data chat diekspor','success');
+};
+
+window.exportSettings = async () => {
+  const snap = await get(ref(db,'settings'));
+  if(!snap.exists()){showToast('Tidak ada data','error');return;}
+  const settings = snap.val();
+  delete settings.apiKey;
+  downloadJSON(settings,'settings-export.json');
+  showToast('Konfigurasi diekspor','success');
+};
+
+window.exportSecurityLogs = async () => {
+  const [adminLogsSnap, jailSnap] = await Promise.all([get(ref(db,'adminLogs')),get(ref(db,'jailbreakLogs'))]);
+  const data = {adminLogs:[],jailbreakLogs:[]};
+  if(adminLogsSnap.exists()) adminLogsSnap.forEach(c=>data.adminLogs.push(c.val()));
+  if(jailSnap.exists()) jailSnap.forEach(c=>data.jailbreakLogs.push(c.val()));
+  downloadJSON(data,'security-logs.json');
+  showToast('Log keamanan diekspor','success');
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PARTICLES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function createParticles() {
+  const container = document.getElementById('loginParticles');
+  for(let i=0; i<20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.animationDuration = (4+Math.random()*8)+'s';
+    p.style.animationDelay = (Math.random()*6)+'s';
+    p.style.setProperty('--dx', (Math.random()*60-30)+'px');
+    const size = 1+Math.random()*3;
+    p.style.width = size+'px';
+    p.style.height = size+'px';
+    if(Math.random()>0.5) p.style.background = 'var(--purple)';
+    container.appendChild(p);
+  }
+}
+
+// Expose all needed globals
+window.closeModal = closeModal;
+window.openModal = openModal;
+window.loadAdminData = loadAdminData;
+window.openProfile = window.openProfile;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// START
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.addEventListener('DOMContentLoaded', initApp);
+
+// Enter key login
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter') {
+    const loginForm = document.getElementById('loginForm');
+    const regForm = document.getElementById('registerForm');
+    if(loginForm.style.display!=='none' && document.getElementById('loginScreen').classList.contains('active')) {
+      if(document.activeElement?.tagName==='INPUT') doLogin();
+    }
+  }
+});
+
+</script>
+</body>
+</html>
