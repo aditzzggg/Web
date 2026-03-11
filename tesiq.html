@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes IQ - Kelas 7 & 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00ffff;
+            --secondary: #ff00ff;
+            --accent: #ffff00;
+            --dark: #0a0e27;
+            --darker: #050814;
+            --success: #00ff88;
+            --danger: #ff0055;
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--darker);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 255, 0, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .neural-network {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(0, 255, 255, 0.8), 0 0 60px rgba(255, 0, 255, 0.5);
+            }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 0.9em;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            flex: 1;
+            min-width: 120px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .progress-container {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .question-card {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(255, 0, 255, 0.05) 100%);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            animation: slideIn 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .question-number {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.1em;
+        }
+
+        .question-type {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: rgba(0, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .option:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .option.selected {
+            border-color: var(--accent);
+            background: rgba(255, 255, 0, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: rgba(0, 255, 136, 0.1);
+            animation: correctAnim 0.5s ease;
+        }
+
+        .option.incorrect {
+            border-color: var(--danger);
+            background: rgba(255, 0, 85, 0.1);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes correctAnim {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: var(--dark);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start-screen, .results-screen {
+            text-align: center;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .feature-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .iq-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            animation: scoreReveal 1s ease;
+        }
+
+        @keyframes scoreReveal {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .iq-description {
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+        }
+
+        .score-history {
+            margin-top: 30px;
+            background: rgba(255, 0, 255, 0.05);
+            border: 1px solid var(--secondary);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .history-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .timer-alert {
+            color: var(--danger);
+            animation: blink 1s ease infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .hint-btn {
+            background: linear-gradient(45deg, var(--secondary), var(--accent));
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            color: var(--dark);
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .hint-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+        }
+
+        .hint-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .hint-text {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            animation: slideIn 0.3s ease;
+        }
+
+        .brain-animation {
+            width: 200px;
+            height: 200px;
+            margin: 30px auto;
+            position: relative;
+        }
+
+        .brain-svg {
+            width: 100%;
+            height: 100%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            .stat-item {
+                min-width: 100px;
+            }
+            .question-text {
+                font-size: 1em;
+            }
+            .iq-score {
+                font-size: 3.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="neural-network" id="neuralCanvas"></canvas>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Tes IQ</h1>
+            <div class="subtitle">Matematika & Bahasa Indonesia • Kelas 7-8</div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="start-screen">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⏱️</div>
+                    <div class="feature-title">Timer Cerdas</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Tracking Progress</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">Riwayat Skor</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <div class="feature-title">Sistem Hint</div>
+                </div>
+            </div>
+
+            <div class="brain-animation">
+                <svg class="brain-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="url(#gradient1)" d="M100,20 C130,20 155,45 155,75 C155,85 150,95 145,100 C150,110 155,120 155,130 C155,160 130,180 100,180 C70,180 45,160 45,130 C45,120 50,110 55,100 C50,95 45,85 45,75 C45,45 70,20 100,20 Z">
+                        <animate attributeName="d" 
+                            dur="3s" 
+                            repeatCount="indefinite"
+                            values="
+                                M100,20 C130,20 155,45 155,75 C155,85 150,95 145,100 C150,110 155,120 155,130 C155,160 130,180 100,180 C70,180 45,160 45,130 C45,120 50,110 55,100 C50,95 45,85 45,75 C45,45 70,20 100,20 Z;
+                                M100,25 C128,25 150,47 150,75 C150,83 147,92 143,100 C147,108 150,117 150,125 C150,153 128,175 100,175 C72,175 50,153 50,125 C50,117 53,108 57,100 C53,92 50,83 50,75 C50,47 72,25 100,25 Z;
+                                M100,20 C130,20 155,45 155,75 C155,85 150,95 145,100 C150,110 155,120 155,130 C155,160 130,180 100,180 C70,180 45,160 45,130 C45,120 50,110 55,100 C50,95 45,85 45,75 C45,45 70,20 100,20 Z
+                            "/>
+                    </path>
+                    <defs>
+                        <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#ff00ff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ffff00;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <p style="margin: 20px 0; font-size: 1.1em;">
+                40 Soal Tantangan • Matematika & Bahasa Indonesia<br>
+                Waktu: 30 Menit • Sistem Penilaian IQ Akurat
+            </p>
+
+            <button class="btn" onclick="startTest()">Mulai Tes IQ</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-label">Waktu</div>
+                    <div class="stat-value" id="timer">30:00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Soal</div>
+                    <div class="stat-value" id="questionCounter">1/40</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Hint</div>
+                    <div class="stat-value" id="hintCounter">3</div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div id="questionContainer"></div>
+
+            <button class="btn" id="nextBtn" onclick="nextQuestion()">Soal Berikutnya</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden results-screen">
+            <div class="brain-animation">
+                <svg class="brain-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="url(#gradient2)" d="M100,20 C130,20 155,45 155,75 C155,85 150,95 145,100 C150,110 155,120 155,130 C155,160 130,180 100,180 C70,180 45,160 45,130 C45,120 50,110 55,100 C50,95 45,85 45,75 C45,45 70,20 100,20 Z"/>
+                    <defs>
+                        <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <h2 style="font-family: 'Orbitron', sans-serif; color: var(--primary); margin-bottom: 20px;">HASIL TES IQ ANDA</h2>
+            
+            <div class="iq-score" id="iqScore">100</div>
+            
+            <div class="iq-description" id="iqDescription"></div>
+
+            <div class="stats-bar" style="margin-top: 30px;">
+                <div class="stat-item">
+                    <div class="stat-label">Benar</div>
+                    <div class="stat-value" id="correctCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Salah</div>
+                    <div class="stat-value" id="incorrectCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Akurasi</div>
+                    <div class="stat-value" id="accuracy">0%</div>
+                </div>
+            </div>
+
+            <div class="score-history" id="scoreHistory"></div>
+
+            <button class="btn" onclick="restartTest()" style="margin-top: 20px;">Ulangi Tes</button>
+        </div>
+    </div>
+
+    <script>
+        // Neural Network Canvas Animation
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const nodes = [];
+        const numNodes = 50;
+
+        for (let i = 0; i < numNodes; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5
+            });
+        }
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw connections
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Draw nodes
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
+            nodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+            });
+            
+            requestAnimationFrame(drawNetwork);
+        }
+
+        drawNetwork();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Quiz Data
+        const questions = [
+            // Matematika - Bilangan Bulat & Operasi
+            {
+                type: "Matematika",
+                question: "Hasil dari (-15) + 23 - (-8) adalah...",
+                options: ["16", "30", "0", "-30"],
+                correct: 1,
+                hint: "Ingat: mengurangi bilangan negatif sama dengan menambah"
+            },
+            {
+                type: "Matematika",
+                question: "Jika -3 × (4 - 7) = ...",
+                options: ["9", "-9", "21", "-21"],
+                correct: 0,
+                hint: "Kerjakan dalam kurung terlebih dahulu"
+            },
+            {
+                type: "Matematika",
+                question: "KPK dari 12, 18, dan 24 adalah...",
+                options: ["36", "72", "144", "216"],
+                correct: 1,
+                hint: "Faktorkan setiap bilangan menjadi faktor prima"
+            },
+            {
+                type: "Matematika",
+                question: "FPB dari 48, 72, dan 96 adalah...",
+                options: ["12", "24", "8", "6"],
+                correct: 1,
+                hint: "Cari faktor persekutuan terbesar"
+            },
+            // Matematika - Pecahan & Desimal
+            {
+                type: "Matematika",
+                question: "Hasil dari 2/3 + 3/4 - 1/6 adalah...",
+                options: ["5/4", "7/6", "4/3", "3/2"],
+                correct: 0,
+                hint: "Samakan penyebutnya terlebih dahulu (KPK dari 3, 4, 6)"
+            },
+            {
+                type: "Matematika",
+                question: "0.75 + 1/4 - 0.5 = ...",
+                options: ["0.5", "1.0", "0.75", "1.5"],
+                correct: 0,
+                hint: "Ubah semua ke desimal atau pecahan"
+            },
+            {
+                type: "Matematika",
+                question: "Bentuk persen dari 3/8 adalah...",
+                options: ["37.5%", "38%", "40%", "35%"],
+                correct: 0,
+                hint: "Bagi pembilang dengan penyebut lalu kalikan 100"
+            },
+            // Matematika - Aljabar
+            {
+                type: "Matematika",
+                question: "Jika 3x + 5 = 20, maka nilai x adalah...",
+                options: ["5", "4", "6", "3"],
+                correct: 0,
+                hint: "Pindahkan 5 ke ruas kanan, lalu bagi dengan 3"
+            },
+            {
+                type: "Matematika",
+                question: "Hasil dari 5x - 3x + 2x adalah...",
+                options: ["4x", "10x", "6x", "3x"],
+                correct: 0,
+                hint: "Gabungkan suku-suku sejenis"
+            },
+            {
+                type: "Matematika",
+                question: "Jika 2(x + 3) = 16, maka x = ...",
+                options: ["5", "8", "6", "7"],
+                correct: 0,
+                hint: "Bagi kedua ruas dengan 2 terlebih dahulu"
+            },
+            {
+                type: "Matematika",
+                question: "(x + 3)(x - 2) = ...",
+                options: ["x² + x - 6", "x² - x + 6", "x² + 5x - 6", "x² - 5x + 6"],
+                correct: 0,
+                hint: "Gunakan distributif: kalikan setiap suku"
+            },
+            // Matematika - Perbandingan & Rasio
+            {
+                type: "Matematika",
+                question: "Perbandingan uang Ani dan Budi adalah 3:5. Jika uang Ani Rp 45.000, berapa uang Budi?",
+                options: ["Rp 75.000", "Rp 60.000", "Rp 90.000", "Rp 50.000"],
+                correct: 0,
+                hint: "Gunakan perbandingan senilai"
+            },
+            {
+                type: "Matematika",
+                question: "Sebuah peta memiliki skala 1:200.000. Jika jarak pada peta 5 cm, jarak sebenarnya adalah...",
+                options: ["10 km", "20 km", "5 km", "15 km"],
+                correct: 0,
+                hint: "Kalikan jarak peta dengan skala"
+            },
+            {
+                type: "Matematika",
+                question: "15% dari 240 adalah...",
+                options: ["36", "30", "40", "45"],
+                correct: 0,
+                hint: "Kalikan 240 dengan 15/100"
+            },
+            // Matematika - Geometri
+            {
+                type: "Matematika",
+                question: "Keliling persegi panjang dengan panjang 12 cm dan lebar 8 cm adalah...",
+                options: ["40 cm", "48 cm", "96 cm", "20 cm"],
+                correct: 0,
+                hint: "K = 2(p + l)"
+            },
+            {
+                type: "Matematika",
+                question: "Luas segitiga dengan alas 10 cm dan tinggi 8 cm adalah...",
+                options: ["40 cm²", "80 cm²", "20 cm²", "60 cm²"],
+                correct: 0,
+                hint: "L = 1/2 × alas × tinggi"
+            },
+            {
+                type: "Matematika",
+                question: "Jumlah sudut dalam segitiga adalah...",
+                options: ["180°", "360°", "90°", "270°"],
+                correct: 0,
+                hint: "Ingat teorema dasar segitiga"
+            },
+            {
+                type: "Matematika",
+                question: "Volume kubus dengan panjang rusuk 5 cm adalah...",
+                options: ["125 cm³", "100 cm³", "75 cm³", "150 cm³"],
+                correct: 0,
+                hint: "V = sisi × sisi × sisi"
+            },
+            // Matematika - Statistika
+            {
+                type: "Matematika",
+                question: "Median dari data: 5, 8, 3, 9, 7, 6, 4 adalah...",
+                options: ["6", "5", "7", "8"],
+                correct: 0,
+                hint: "Urutkan data terlebih dahulu, ambil nilai tengah"
+            },
+            {
+                type: "Matematika",
+                question: "Rata-rata dari 7, 9, 5, 11, 8 adalah...",
+                options: ["8", "7", "9", "10"],
+                correct: 0,
+                hint: "Jumlahkan semua data lalu bagi dengan banyak data"
+            },
+            {
+                type: "Matematika",
+                question: "Modus dari data: 3, 5, 3, 7, 8, 3, 5, 9 adalah...",
+                options: ["3", "5", "7", "8"],
+                correct: 0,
+                hint: "Modus adalah data yang paling sering muncul"
+            },
+            
+            // Bahasa Indonesia - Tata Bahasa
+            {
+                type: "Bahasa Indonesia",
+                question: "Kata berimbuhan yang tepat dari kata 'ajar' dengan awalan 'me-' adalah...",
+                options: ["mengajar", "melajar", "meajar", "menajar"],
+                correct: 0,
+                hint: "Awalan 'me-' bertemu huruf 'a' menjadi 'meng-'"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Manakah kalimat yang menggunakan SPOK dengan benar?",
+                options: [
+                    "Adik membaca buku di perpustakaan",
+                    "Membaca buku adik di perpustakaan",
+                    "Di perpustakaan buku adik membaca",
+                    "Buku membaca adik di perpustakaan"
+                ],
+                correct: 0,
+                hint: "SPOK: Subjek + Predikat + Objek + Keterangan"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Imbuhan yang bermakna 'tempat' adalah...",
+                options: ["per-an", "ke-an", "pe-an", "ber-"],
+                correct: 0,
+                hint: "Contoh: perpustakaan (tempat buku)"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kata baku yang benar adalah...",
+                options: ["praktik", "praktek", "prakteg", "praktex"],
+                correct: 0,
+                hint: "Sesuai KBBI, gunakan akhiran 'ik'"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Antonim dari kata 'optimis' adalah...",
+                options: ["pesimis", "realistis", "idealis", "materialis"],
+                correct: 0,
+                hint: "Lawan kata dari memiliki harapan baik"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Sinonim dari kata 'elaborasi' adalah...",
+                options: ["penjelasan", "singkatan", "rangkuman", "kesimpulan"],
+                correct: 0,
+                hint: "Berarti menjelaskan secara detail"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kalimat yang menggunakan majas personifikasi adalah...",
+                options: [
+                    "Angin berbisik di telinga saya",
+                    "Wajahnya seperti bulan",
+                    "Kerjanya cepat sekali",
+                    "Rumahnya sangat besar"
+                ],
+                correct: 0,
+                hint: "Personifikasi: memberi sifat manusia pada benda"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kata penghubung yang menyatakan sebab-akibat adalah...",
+                options: ["sehingga", "tetapi", "atau", "lalu"],
+                correct: 0,
+                hint: "Menunjukkan hubungan kausal"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kalimat majemuk setara menggunakan kata penghubung...",
+                options: ["dan", "karena", "bahwa", "ketika"],
+                correct: 0,
+                hint: "Menggabungkan dua kalimat yang setara"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kata ganti orang ketiga tunggal adalah...",
+                options: ["dia", "kami", "kita", "kalian"],
+                correct: 0,
+                hint: "Merujuk satu orang yang dibicarakan"
+            },
+            
+            // Bahasa Indonesia - Membaca & Pemahaman
+            {
+                type: "Bahasa Indonesia",
+                question: "Ide pokok adalah...",
+                options: [
+                    "Gagasan utama dalam paragraf",
+                    "Kalimat pertama paragraf",
+                    "Kalimat terakhir paragraf",
+                    "Semua kalimat dalam paragraf"
+                ],
+                correct: 0,
+                hint: "Inti dari keseluruhan paragraf"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Struktur teks eksposisi yang benar adalah...",
+                options: [
+                    "Tesis - Argumentasi - Penegasan",
+                    "Orientasi - Komplikasi - Resolusi",
+                    "Abstrak - Orientasi - Krisis",
+                    "Pengenalan - Isi - Penutup"
+                ],
+                correct: 0,
+                hint: "Teks yang berisi pendapat dengan argumentasi"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Ciri khas puisi adalah...",
+                options: [
+                    "Menggunakan diksi dan majas",
+                    "Menggunakan dialog",
+                    "Bersifat objektif",
+                    "Berbentuk paragraf panjang"
+                ],
+                correct: 0,
+                hint: "Pilihan kata yang indah dan kiasan"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Teks yang berisi langkah-langkah melakukan sesuatu disebut...",
+                options: ["prosedur", "deskripsi", "narasi", "eksposisi"],
+                correct: 0,
+                hint: "Seperti resep masakan atau petunjuk"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Dalam teks berita, informasi penting terdapat pada bagian...",
+                options: ["teras berita", "tubuh berita", "ekor berita", "judul berita"],
+                correct: 0,
+                hint: "Paragraf pertama yang menjawab 5W+1H"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Pantun memiliki ciri khas...",
+                options: [
+                    "4 baris dengan sajak a-b-a-b",
+                    "2 baris dengan sajak a-a",
+                    "8 baris dengan sajak bebas",
+                    "6 baris dengan sajak a-b-c"
+                ],
+                correct: 0,
+                hint: "2 baris sampiran, 2 baris isi"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Nilai yang terkandung dalam cerita fabel adalah...",
+                options: ["moral/budi pekerti", "ekonomi", "politik", "teknologi"],
+                correct: 0,
+                hint: "Fabel adalah cerita binatang dengan pesan moral"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Amanat dalam cerpen adalah...",
+                options: [
+                    "Pesan yang ingin disampaikan penulis",
+                    "Tokoh dalam cerita",
+                    "Latar belakang cerita",
+                    "Alur cerita"
+                ],
+                correct: 0,
+                hint: "Pelajaran yang bisa diambil dari cerita"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Kalimat langsung ditandai dengan...",
+                options: ["tanda petik (\"...\")", "tanda kurung (...)", "tanda seru (!)", "tanda tanya (?)"],
+                correct: 0,
+                hint: "Menunjukkan ucapan langsung seseorang"
+            },
+            {
+                type: "Bahasa Indonesia",
+                question: "Konjungsi 'akan tetapi' berfungsi untuk...",
+                options: ["menyatakan pertentangan", "menyatakan waktu", "menyatakan tujuan", "menyatakan sebab"],
+                correct: 0,
+                hint: "Menghubungkan dua klausa yang berlawanan"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timeLeft = 1800; // 30 minutes in seconds
+        let timerInterval;
+        let hintsRemaining = 3;
+        let userAnswers = [];
+        let hintUsed = false;
+
+        function startTest() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            
+            shuffleQuestions();
+            showQuestion();
+            startTimer();
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishTest();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 60) {
+                timerElement.classList.add('timer-alert');
+            }
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+            
+            hintUsed = false;
+            
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number">Soal ${currentQuestion + 1}/40</span>
+                        <span class="question-type">${question.type}</span>
+                    </div>
+                    <div class="question-text">${question.question}</div>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option" onclick="selectOption(${index})" data-index="${index}">
+                                ${String.fromCharCode(65 + index)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${hintsRemaining > 0 ? `
+                        <button class="hint-btn" onclick="showHint()" id="hintBtn">
+                            💡 Gunakan Hint (${hintsRemaining} tersisa)
+                        </button>
+                        <div id="hintContainer"></div>
+                    ` : ''}
+                </div>
+            `;
+            
+            updateProgress();
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function selectOption(index) {
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[index].classList.add('selected');
+            
+            userAnswers[currentQuestion] = index;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function showHint() {
+            if (hintsRemaining > 0 && !hintUsed) {
+                const question = questions[currentQuestion];
+                const hintContainer = document.getElementById('hintContainer');
+                hintContainer.innerHTML = `
+                    <div class="hint-text">
+                        💡 ${question.hint}
+                    </div>
+                `;
+                
+                hintsRemaining--;
+                hintUsed = true;
+                document.getElementById('hintCounter').textContent = hintsRemaining;
+                document.getElementById('hintBtn').disabled = true;
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+                document.getElementById('questionCounter').textContent = `${currentQuestion + 1}/40`;
+            } else {
+                finishTest();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function finishTest() {
+            clearInterval(timerInterval);
+            
+            // Calculate score
+            let correct = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (userAnswers[i] === questions[i].correct) {
+                    correct++;
+                }
+            }
+            
+            score = correct;
+            const percentage = (correct / questions.length) * 100;
+            
+            // Calculate IQ score (using standard formula)
+            // Base IQ: 100
+            // Each correct answer adds points based on difficulty
+            // Standard deviation approach: IQ = 100 + (z-score * 15)
+            const meanScore = questions.length * 0.6; // Expected 60% correct for average
+            const stdDev = questions.length * 0.15; // Standard deviation
+            const zScore = (correct - meanScore) / stdDev;
+            const iqScore = Math.round(100 + (zScore * 15));
+            
+            // Clamp IQ between 70 and 145
+            const finalIQ = Math.max(70, Math.min(145, iqScore));
+            
+            displayResults(finalIQ, correct, questions.length - correct, percentage);
+            saveScore(finalIQ, correct, percentage);
+        }
+
+        function displayResults(iq, correct, incorrect, percentage) {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            // Animate IQ score
+            const iqElement = document.getElementById('iqScore');
+            let currentIQ = 0;
+            const iqInterval = setInterval(() => {
+                currentIQ += 2;
+                if (currentIQ >= iq) {
+                    currentIQ = iq;
+                    clearInterval(iqInterval);
+                }
+                iqElement.textContent = currentIQ;
+            }, 20);
+            
+            // IQ Description
+            let description = '';
+            if (iq >= 130) {
+                description = '🏆 <strong>Superior!</strong> Anda memiliki kemampuan kognitif yang sangat tinggi. Hasil luar biasa!';
+            } else if (iq >= 120) {
+                description = '⭐ <strong>Di Atas Rata-rata!</strong> Kemampuan pemecahan masalah Anda sangat baik.';
+            } else if (iq >= 110) {
+                description = '✨ <strong>Rata-rata Tinggi!</strong> Anda memiliki kemampuan kognitif yang solid.';
+            } else if (iq >= 90) {
+                description = '👍 <strong>Rata-rata!</strong> Kemampuan kognitif Anda normal dan sehat.';
+            } else {
+                description = '💪 <strong>Terus Berlatih!</strong> Dengan latihan, kemampuan Anda akan meningkat pesat.';
+            }
+            
+            document.getElementById('iqDescription').innerHTML = description;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = incorrect;
+            document.getElementById('accuracy').textContent = percentage.toFixed(1) + '%';
+            
+            displayScoreHistory();
+        }
+
+        function saveScore(iq, correct, percentage) {
+            const history = JSON.parse(localStorage.getItem('iqHistory') || '[]');
+            const now = new Date();
+            
+            history.push({
+                date: now.toLocaleDateString('id-ID'),
+                time: now.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}),
+                iq: iq,
+                correct: correct,
+                percentage: percentage
+            });
+            
+            // Keep only last 10 scores
+            if (history.length > 10) {
+                history.shift();
+            }
+            
+            localStorage.setItem('iqHistory', JSON.stringify(history));
+        }
+
+        function displayScoreHistory() {
+            const history = JSON.parse(localStorage.getItem('iqHistory') || '[]');
+            const container = document.getElementById('scoreHistory');
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; opacity: 0.6;">Belum ada riwayat tes</p>';
+                return;
+            }
+            
+            let html = '<h3 class="history-title">📊 Riwayat 10 Tes Terakhir</h3>';
+            
+            history.reverse().forEach((record, index) => {
+                html += `
+                    <div class="history-item">
+                        <span>${record.date} • ${record.time}</span>
+                        <span>IQ: <strong style="color: var(--accent)">${record.iq}</strong> • ${record.correct}/40</span>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function restartTest() {
+            currentQuestion = 0;
+            score = 0;
+            timeLeft = 1800;
+            hintsRemaining = 3;
+            userAnswers = [];
+            
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('timer').classList.remove('timer-alert');
+        }
+    </script>
+</body>
+</html>
