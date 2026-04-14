@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexDrop — File Hosting</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<style>
+/* ════ VARIABLES ════ */
+:root {
+  --bg:#05080f;--bg2:#090e1a;--bg3:#0d1424;
+  --card:#101828;--card2:#141f32;
+  --border:#1c2a42;--border2:#243650;
+  --a:#3b82f6;--a2:#2563eb;--a3:#60a5fa;
+  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a855f7;--cyan:#06b6d4;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+  --shadow:0 20px 60px rgba(0,0,0,.6);
+  --glow:0 0 30px rgba(59,130,246,.25);
+  --r:12px;--r2:8px;
+}
+[data-theme=light]{
+  --bg:#f1f5f9;--bg2:#e2e8f0;--bg3:#cbd5e1;
+  --card:#ffffff;--card2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+img{max-width:100%;}
+a{color:var(--a3);text-decoration:none;}
+a:hover{color:var(--a);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ════ UTILITIES ════ */
+.hidden{display:none !important;}
+.flex{display:flex;align-items:center;}
+.flex-col{display:flex;flex-direction:column;}
+.gap-4{gap:4px;}.gap-8{gap:8px;}.gap-12{gap:12px;}.gap-16{gap:16px;}
+.center{text-align:center;}
+.bold{font-weight:700;}
+.mono{font-family:'JetBrains Mono',monospace;}
+.small{font-size:12px;}
+.muted{color:var(--text2);}
+.danger{color:var(--red);}
+.success{color:var(--green);}
+.accent{color:var(--a3);}
+.truncate{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+/* ════ BUTTONS ════ */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--r2);font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap;text-decoration:none;}
+.btn-primary{background:var(--a);color:#fff;}
+.btn-primary:hover{background:var(--a2);transform:translateY(-1px);box-shadow:var(--glow);color:#fff;}
+.btn-success{background:var(--green);color:#000;}
+.btn-success:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{filter:brightness(1.1);}
+.btn-warning{background:var(--yellow);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-ghost:hover{border-color:var(--a);color:var(--a3);background:rgba(59,130,246,.08);}
+.btn-sm{padding:6px 12px;font-size:13px;}
+.btn-lg{padding:14px 28px;font-size:16px;border-radius:var(--r);}
+.btn-xl{padding:18px 40px;font-size:18px;font-weight:700;border-radius:var(--r);width:100%;justify-content:center;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;}
+.btn-icon{padding:8px;border-radius:var(--r2);background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;font-size:16px;}
+.btn-icon:hover{border-color:var(--a);color:var(--a3);background:rgba(59,130,246,.08);}
+
+/* ════ INPUTS ════ */
+.input,.textarea,.select{width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:var(--r2);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s;}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--a);}
+.textarea{min-height:80px;resize:vertical;}
+.input-group{display:flex;gap:8px;}
+.input-group .input{flex:1;}
+.label{font-size:13px;color:var(--text2);margin-bottom:6px;display:block;font-weight:500;}
+.pw-toggle{position:relative;}
+.pw-toggle .input{padding-right:44px;}
+.pw-toggle-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;}
+
+/* ════ NAVBAR ════ */
+#navbar{position:sticky;top:0;z-index:200;background:rgba(5,8,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:58px;padding:0 20px;display:flex;align-items:center;gap:12px;}
+[data-theme=light] #navbar{background:rgba(241,245,249,.92);}
+.nav-logo{font-weight:900;font-size:20px;letter-spacing:-.5px;background:linear-gradient(135deg,#60a5fa,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap;cursor:pointer;}
+.nav-search{flex:1;max-width:360px;position:relative;}
+.nav-search .input{padding-left:36px;padding-top:7px;padding-bottom:7px;}
+.nav-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r2);transition:background .2s;}
+.nav-user:hover{background:var(--card2);}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.nav-username{font-size:13px;font-weight:600;}
+
+/* Search dropdown */
+.search-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);box-shadow:var(--shadow);z-index:300;max-height:360px;overflow-y:auto;display:none;}
+.search-dropdown.open{display:block;}
+.search-result-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border);}
+.search-result-item:hover{background:rgba(59,130,246,.08);}
+.search-result-item:last-child{border-bottom:none;}
+.search-empty{text-align:center;padding:24px;color:var(--text3);font-size:13px;}
+
+/* ════ PAGES ════ */
+.page{display:none;min-height:calc(100vh - 58px);animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════ HOME PAGE ════ */
+#page-home{background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(59,130,246,.15) 0%,transparent 60%);}
+.home-hero{padding:72px 20px 48px;text-align:center;max-width:700px;margin:0 auto;}
+.home-hero h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px;}
+.home-hero h1 span{background:linear-gradient(135deg,#60a5fa,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.home-hero p{font-size:17px;color:var(--text2);margin-bottom:36px;}
+.home-stats{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+.home-stat{text-align:center;}
+.home-stat .val{font-size:24px;font-weight:800;color:var(--text);}
+.home-stat .lbl{font-size:12px;color:var(--text3);}
+
+/* Upload Box */
+.upload-box{max-width:680px;margin:0 auto 32px;background:var(--card);border:2px dashed var(--border2);border-radius:20px;padding:52px 32px;text-align:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+.upload-box::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(59,130,246,.05),transparent 70%);pointer-events:none;}
+.upload-box.drag-over{border-color:var(--a);background:rgba(59,130,246,.06);box-shadow:var(--glow);}
+.upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:52px;margin-bottom:16px;}
+.upload-box h2{font-size:20px;font-weight:700;margin-bottom:8px;}
+.upload-box p{color:var(--text2);font-size:14px;margin-bottom:24px;}
+.upload-hints{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+.upload-hint{font-size:12px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:4px 10px;border-radius:20px;}
+
+/* Upload from URL bar */
+.upload-url-bar{max-width:680px;margin:0 auto 16px;padding:0 20px;}
+.upload-url-bar .input-group{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:6px 6px 6px 16px;display:flex;align-items:center;gap:8px;}
+.upload-url-bar input{background:none;border:none;flex:1;color:var(--text);font-size:13px;outline:none;}
+
+/* Upload Queue */
+#upload-queue{max-width:680px;margin:0 auto 32px;}
+.queue-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:10px;animation:fadeIn .3s ease;}
+.queue-item-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.queue-icon{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.queue-name{flex:1;font-size:14px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.queue-size{font-size:12px;color:var(--text2);white-space:nowrap;}
+.queue-status{font-size:12px;font-weight:600;white-space:nowrap;}
+.queue-status.uploading{color:var(--a3);}
+.queue-status.done{color:var(--green);}
+.queue-status.error{color:var(--red);}
+.progress-bar{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width .15s;}
+.queue-link{margin-top:10px;font-size:12px;color:var(--text2);}
+.queue-link a{color:var(--a3);}
+.queue-speed{font-size:11px;color:var(--text3);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+
+/* Recent files on home */
+.recent-section{max-width:680px;margin:0 auto 48px;padding:0 20px;}
+.recent-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.recent-header h3{font-size:15px;font-weight:700;}
+.recent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.recent-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .2s;}
+.recent-card:hover{border-color:var(--a);transform:translateY(-1px);}
+.recent-card-info{flex:1;min-width:0;}
+.recent-card-name{font-size:13px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.recent-card-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* Features */
+.features-grid{max-width:900px;margin:0 auto 60px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 20px;}
+@media(max-width:640px){.features-grid{grid-template-columns:1fr;}}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:all .2s;}
+.feature-card:hover{border-color:var(--a);transform:translateY(-2px);}
+.feature-icon{font-size:28px;margin-bottom:12px;}
+.feature-title{font-weight:700;margin-bottom:6px;}
+.feature-desc{font-size:13px;color:var(--text2);line-height:1.6;}
+
+/* Mobile FAB */
+.mobile-fab{display:none;position:fixed;bottom:80px;right:20px;z-index:150;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--purple));border:none;cursor:pointer;font-size:24px;box-shadow:0 8px 24px rgba(59,130,246,.4);transition:all .2s;}
+.mobile-fab:hover{transform:scale(1.1);}
+@media(max-width:480px){.mobile-fab{display:flex;align-items:center;justify-content:center;}}
+
+/* ════ DASHBOARD ════ */
+#page-dashboard{padding:32px 20px;max-width:1100px;margin:0 auto;}
+.dash-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+.dash-header h2{font-size:24px;font-weight:800;flex:1;}
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+@media(max-width:600px){.dash-stats{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
+.stat-card .stat-icon{font-size:22px;margin-bottom:8px;}
+.stat-card .stat-val{font-size:22px;font-weight:800;}
+.stat-card .stat-lbl{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* Storage bar */
+.storage-bar-wrap{max-width:100%;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;}
+.storage-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:8px;}
+.storage-bar-bg{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.storage-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--a),var(--purple));transition:width 1s;}
+
+/* File Table */
+.files-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.files-toolbar .input{max-width:260px;}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.view-btn{padding:6px 10px;background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:14px;transition:all .2s;}
+.view-btn.active{background:var(--a);color:#fff;}
+
+.files-table{width:100%;border-collapse:collapse;}
+.files-table th{text-align:left;padding:10px 12px;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:600;cursor:pointer;user-select:none;}
+.files-table th:hover{color:var(--text2);}
+.files-table td{padding:12px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.files-table tr:last-child td{border-bottom:none;}
+.files-table tr:hover td{background:rgba(255,255,255,.02);}
+.file-row-icon{width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.file-row-name{font-weight:500;max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.file-row-actions{display:flex;gap:6px;}
+
+/* Grid view */
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+.file-grid-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;}
+.file-grid-card:hover{border-color:var(--a);transform:translateY(-2px);box-shadow:var(--glow);}
+.file-grid-icon{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;margin:0 auto 10px;}
+.file-grid-name{font-size:13px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:4px;}
+.file-grid-meta{font-size:11px;color:var(--text3);}
+
+.star-btn{background:none;border:none;cursor:pointer;font-size:16px;transition:transform .2s;}
+.star-btn:hover{transform:scale(1.3);}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2);}
+.empty-state .empty-icon{font-size:52px;margin-bottom:16px;}
+.empty-state h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+
+/* ════ DOWNLOAD PAGE ════ */
+#page-download{max-width:960px;margin:0 auto;padding:32px 20px;}
+.dl-layout{display:grid;grid-template-columns:1fr 300px;gap:24px;}
+@media(max-width:768px){.dl-layout{grid-template-columns:1fr;}}
+
+.dl-hero{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.dl-hero-header{background:linear-gradient(135deg,var(--bg2),var(--card2));padding:28px;border-bottom:1px solid var(--border);display:flex;gap:18px;align-items:flex-start;}
+.dl-file-icon{width:72px;height:72px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.dl-file-name{font-size:20px;font-weight:800;word-break:break-all;margin-bottom:8px;}
+.dl-file-badges{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--a3);border:1px solid rgba(59,130,246,.2);}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.2);}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.dl-hero-body{padding:28px;}
+
+/* Preview Box */
+.preview-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px;min-height:100px;display:flex;align-items:center;justify-content:center;}
+.preview-box img{max-width:100%;max-height:400px;object-fit:contain;}
+.preview-box video,.preview-box audio{width:100%;outline:none;}
+.preview-box .preview-placeholder{text-align:center;padding:32px;color:var(--text3);}
+
+/* Timer */
+.dl-timer{display:flex;align-items:center;gap:16px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;}
+.timer-ring{position:relative;width:52px;height:52px;flex-shrink:0;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:16px;color:var(--a3);}
+.dl-timer-info h4{font-weight:600;margin-bottom:3px;}
+.dl-timer-info p{font-size:13px;color:var(--text2);}
+
+.pw-gate{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;}
+.pw-gate h4{font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+.dl-btn-wrap{margin-bottom:20px;}
+.dl-main-btn{width:100%;padding:18px;border-radius:var(--r);background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;font-size:18px;font-weight:800;border:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;}
+.dl-main-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);}
+.dl-main-btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 40px rgba(34,197,94,.4);}
+.dl-main-btn:disabled{background:var(--card2);color:var(--text3);cursor:not-allowed;}
+.dl-btn-sub{font-size:12px;font-weight:400;opacity:.7;}
+.dl-mirrors{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+.share-row{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px;margin-bottom:16px;}
+.share-url{flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:none;border:none;outline:none;cursor:pointer;}
+.share-socials{display:flex;gap:6px;}
+
+.tabs-nav{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;}
+.tab-btn{padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:'Outfit',sans-serif;margin-bottom:-1px;transition:all .2s;}
+.tab-btn.active{color:var(--a3);border-bottom-color:var(--a);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+.detail-tbl{width:100%;border-collapse:collapse;}
+.detail-tbl tr{border-bottom:1px solid var(--border);}
+.detail-tbl tr:last-child{border-bottom:none;}
+.detail-tbl td{padding:10px 0;font-size:14px;}
+.detail-tbl td:first-child{color:var(--text3);width:130px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* Comments */
+.comment-input-row{display:flex;gap:10px;margin-bottom:20px;}
+.comment-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.comment-item{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
+.comment-item:last-child{border-bottom:none;}
+.comment-item-body{flex:1;}
+.comment-author{font-weight:600;font-size:14px;}
+.comment-author span{color:var(--text3);font-weight:400;font-size:12px;margin-left:8px;}
+.comment-text{font-size:14px;color:var(--text2);line-height:1.6;margin-top:3px;}
+.comment-actions-row{display:flex;gap:12px;margin-top:8px;}
+.comment-action{background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:4px;transition:color .2s;}
+.comment-action:hover{color:var(--a3);}
+
+/* Sidebar */
+.dl-sidebar{display:flex;flex-direction:column;gap:16px;}
+.widget{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.widget-head{padding:14px 18px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;}
+.widget-body{padding:16px 18px;}
+.stat-row2{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.stat-row2:last-child{border-bottom:none;}
+.stat-lbl2{font-size:13px;color:var(--text2);}
+.stat-val2{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;}
+.related-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;text-decoration:none;}
+.related-item:last-child{border-bottom:none;}
+.related-item:hover .related-name{color:var(--a3);}
+.related-name{font-size:13px;font-weight:500;transition:color .2s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:180px;}
+.related-size{font-size:11px;color:var(--text3);margin-top:2px;}
+
+.premium-cta{background:linear-gradient(135deg,#1a2040,#0f1629);border:1px solid rgba(168,85,247,.2);border-radius:var(--r);padding:20px;text-align:center;}
+.premium-cta h4{font-weight:800;margin-bottom:6px;}
+.premium-cta p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;}
+
+.uploader-card{text-align:center;padding:20px;}
+.uploader-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--purple));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;margin:0 auto 10px;}
+.uploader-name{font-weight:700;margin-bottom:4px;}
+.uploader-meta{font-size:13px;color:var(--text2);margin-bottom:12px;}
+
+/* ════ MODALS ════ */
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:36px;width:100%;max-width:440px;animation:modalPop .3s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto;}
+.modal-lg{max-width:600px;}
+@keyframes modalPop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:none}}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:6px;}
+.modal .sub{font-size:14px;color:var(--text2);margin-bottom:24px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);padding:4px;transition:color .2s;}
+.modal-close:hover{color:var(--text);}
+.modal-form{display:flex;flex-direction:column;gap:14px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+
+.dl-speed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.dl-speed-item{text-align:center;}
+.dl-speed-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--a3);}
+.dl-speed-lbl{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* Auth Modal */
+.auth-modal .modal{max-width:380px;}
+.auth-tabs{display:flex;margin-bottom:24px;border-bottom:1px solid var(--border);}
+.auth-tab{flex:1;text-align:center;padding:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+.auth-tab.active{color:var(--a3);border-bottom-color:var(--a);}
+.auth-form{display:flex;flex-direction:column;gap:12px;}
+.auth-divider{text-align:center;color:var(--text3);font-size:13px;margin:4px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border);}
+.auth-divider::before{left:0;}
+.auth-divider::after{right:0;}
+
+/* Embed code box */
+.embed-code{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--a3);word-break:break-all;line-height:1.6;margin-bottom:12px;}
+
+/* Toast */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:14px;min-width:280px;max-width:400px;box-shadow:var(--shadow);transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateX(0);}
+.toast-icon{font-size:18px;flex-shrink:0;}
+.toast-close{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0;}
+
+/* Firebase rules warning */
+.rules-warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--yellow);margin-bottom:16px;display:none;}
+.rules-warning strong{display:block;margin-bottom:4px;}
+
+/* ════ FILE TYPE COLORS ════ */
+.ft-apk,.ft-android{background:#0d2818;color:#22c55e;}
+.ft-zip,.ft-rar,.ft-7z{background:#2a1a08;color:#f59e0b;}
+.ft-mp4,.ft-mkv,.ft-avi{background:#2a0808;color:#ef4444;}
+.ft-mp3,.ft-wav,.ft-flac{background:#1a082a;color:#a855f7;}
+.ft-pdf{background:#2a1008;color:#f97316;}
+.ft-jpg,.ft-jpeg,.ft-png,.ft-gif,.ft-webp{background:#0d2030;color:#06b6d4;}
+.ft-exe,.ft-msi{background:#08102a;color:#60a5fa;}
+.ft-doc,.ft-docx{background:#082030;color:#3b82f6;}
+.ft-xls,.ft-xlsx{background:#082a14;color:#10b981;}
+.ft-ppt,.ft-pptx{background:#2a1408;color:#f97316;}
+.ft-txt,.ft-md{background:#1a1a1a;color:#94a3b8;}
+.ft-default{background:#111827;color:#6b7280;}
+
+/* ════ FOOTER ════ */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:40px 20px 24px;margin-top:60px;}
+.footer-inner{max-width:1100px;margin:0 auto;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px;}
+@media(max-width:640px){.footer-grid{grid-template-columns:1fr 1fr;}}
+.footer-brand p{font-size:13px;color:var(--text3);margin-top:10px;line-height:1.7;}
+.footer-col h5{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:14px;}
+.footer-col a{display:block;font-size:14px;color:var(--text3);margin-bottom:8px;transition:color .2s;}
+.footer-col a:hover{color:var(--a3);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.footer-bottom p{font-size:13px;color:var(--text3);}
+.footer-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{background:var(--bg3);border:1px solid var(--border);padding:3px 10px;border-radius:20px;font-size:11px;color:var(--text2);}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ NAVBAR ══════════ -->
+<nav id="navbar">
+  <div class="nav-logo" onclick="goto('home')">⚡ NexDrop</div>
+
+  <div class="nav-search" id="nav-search-wrap">
+    <span class="nav-search-icon">🔍</span>
+    <input class="input" id="search-input" placeholder="Cari file..." style="font-size:13px" oninput="handleSearch(this.value)" onfocus="openSearchDrop()" onblur="setTimeout(closeSearchDrop,200)">
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+
+  <div class="nav-right">
+    <!-- Theme toggle -->
+    <button class="btn-icon" onclick="toggleTheme()" title="Ganti tema" id="theme-btn">🌙</button>
+    <button class="btn btn-ghost btn-sm" onclick="goto('home')" id="nav-upload-btn">⬆ Upload</button>
+    <button class="btn btn-ghost btn-sm" onclick="goto('dashboard')" id="nav-files-btn">📁 Files</button>
+    <div id="nav-auth-btns" class="flex gap-8">
+      <button class="btn btn-ghost btn-sm" onclick="showAuthModal('login')">Masuk</button>
+      <button class="btn btn-primary btn-sm" onclick="showAuthModal('register')">Daftar</button>
+    </div>
+    <div id="nav-user-area" class="hidden">
+      <div class="nav-user" onclick="goto('dashboard')">
+        <div class="nav-avatar" id="nav-avatar">?</div>
+        <span class="nav-username" id="nav-username">User</span>
+        <span style="color:var(--text3);font-size:12px">▾</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" style="margin-left:4px">Keluar</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ PAGE: HOME ══════════ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <h1>Upload & Bagikan File<br><span>Lebih Cepat</span></h1>
+    <p>Platform hosting file gratis dengan Firebase Storage.<br>Upload, simpan, dan bagikan dengan satu link.</p>
+    <div class="home-stats" id="home-stats">
+      <div class="home-stat"><div class="val" id="stat-pub-files">—</div><div class="lbl">File Diupload</div></div>
+      <div class="home-stat"><div class="val" id="stat-pub-dl">—</div><div class="lbl">Total Unduhan</div></div>
+      <div class="home-stat"><div class="val">100MB</div><div class="lbl">Max per File</div></div>
+      <div class="home-stat"><div class="val">∞</div><div class="lbl">Storage</div></div>
+    </div>
+  </div>
+
+  <!-- Upload from URL -->
+  <div class="upload-url-bar" style="padding:0 20px;max-width:680px;margin:0 auto 12px">
+    <div style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 8px 8px 16px;">
+      <span style="font-size:13px;color:var(--text3);white-space:nowrap">🌐 URL:</span>
+      <input id="url-input" class="input" placeholder="Paste URL file untuk diupload..." style="background:none;border:none;font-size:13px;padding:2px 0;" onkeydown="if(event.key==='Enter')uploadFromURL()">
+      <button class="btn btn-primary btn-sm" onclick="uploadFromURL()">Import</button>
+    </div>
+  </div>
+
+  <!-- Upload Zone -->
+  <div style="padding:0 20px">
+    <div class="upload-box" id="upload-box"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event)">
+      <input type="file" multiple id="file-input" onchange="handleFileChange(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+      <div class="upload-icon">☁️</div>
+      <h2>Drag & Drop File Di Sini</h2>
+      <p>Atau klik untuk memilih · Ctrl+V untuk paste · Max 100MB/file</p>
+      <button class="btn btn-primary" onclick="document.getElementById('file-input').click();event.stopPropagation()">Pilih File</button>
+      <div class="upload-hints">
+        <span class="upload-hint">📦 Max 100MB</span>
+        <span class="upload-hint">🔒 SSL Enkripsi</span>
+        <span class="upload-hint">⚡ Upload Cepat</span>
+        <span class="upload-hint">♾ Permanen</span>
+        <span class="upload-hint">🔗 Link Langsung</span>
+        <span class="upload-hint">🔐 Password Proteksi</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Rules Warning -->
+  <div class="rules-warning" id="rules-warning" style="max-width:680px;margin:0 auto 16px;display:none">
+    <strong>⚠️ Firebase Storage Rules Perlu Dikonfigurasi</strong>
+    Buka Firebase Console → Storage → Rules dan pastikan write diperbolehkan. Salin rules di bawah ke konsol Firebase:<br>
+    <code style="font-size:11px;opacity:.8">allow read: if true; allow write: if request.auth != null;</code>
+  </div>
+
+  <!-- Upload Queue -->
+  <div id="upload-queue" style="padding:0 20px;max-width:680px;margin:0 auto 16px"></div>
+
+  <!-- Recent Files -->
+  <div class="recent-section">
+    <div class="recent-header">
+      <h3>🕒 File Terbaru (Publik)</h3>
+      <button class="btn btn-ghost btn-sm" onclick="loadRecentFiles()">🔄 Refresh</button>
+    </div>
+    <div class="recent-grid" id="recent-files-grid">
+      <div style="color:var(--text3);font-size:13px;grid-column:1/-1;text-align:center;padding:20px">Memuat...</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div style="padding:48px 20px 24px;text-align:center">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin-bottom:8px">FITUR UNGGULAN</div>
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:32px">Semua yang kamu butuhkan</h2>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon">🔗</div><div class="feature-title">Link Langsung</div><div class="feature-desc">Link download permanen langsung setelah upload. Bagikan ke siapa saja.</div></div>
+    <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Statistik Real-time</div><div class="feature-desc">Pantau unduhan, views, dan aktivitas file secara langsung via Firebase.</div></div>
+    <div class="feature-card"><div class="feature-icon">🔐</div><div class="feature-title">Password Proteksi</div><div class="feature-desc">Lindungi file sensitif dengan kata sandi sebelum dibagikan.</div></div>
+    <div class="feature-card"><div class="feature-icon">🗂️</div><div class="feature-title">Manajemen File</div><div class="feature-desc">Atur, rename, edit deskripsi, dan hapus file dari dashboard.</div></div>
+    <div class="feature-card"><div class="feature-icon">🌐</div><div class="feature-title">Upload dari URL</div><div class="feature-desc">Import file langsung dari internet dengan paste URL tanpa download manual.</div></div>
+    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">QR Code & Share</div><div class="feature-desc">Bagikan via QR, WhatsApp, Telegram, Twitter, Facebook, dan email.</div></div>
+    <div class="feature-card"><div class="feature-icon">👁️</div><div class="feature-title">File Preview</div><div class="feature-desc">Preview gambar, video, dan audio langsung di halaman download.</div></div>
+    <div class="feature-card"><div class="feature-icon">📋</div><div class="feature-title">Embed Code</div><div class="feature-desc">Sematkan file ke website mu dengan kode HTML siap pakai.</div></div>
+    <div class="feature-card"><div class="feature-icon">⏱️</div><div class="feature-title">File Expiry</div><div class="feature-desc">Atur kedaluwarsa otomatis: 1 hari, 7 hari, 30 hari, atau selamanya.</div></div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: DASHBOARD ══════════ -->
+<div class="page" id="page-dashboard">
+  <div id="dashboard-login-prompt" class="hidden" style="text-align:center;padding:80px 20px">
+    <div style="font-size:52px;margin-bottom:16px">🔐</div>
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">Login untuk melihat file kamu</h3>
+    <p style="color:var(--text2);margin-bottom:24px">Masuk atau daftar untuk mengelola semua file yang kamu upload.</p>
+    <button class="btn btn-primary" onclick="showAuthModal('login')">Masuk Sekarang</button>
+  </div>
+  <div id="dashboard-content" style="padding:32px 20px;max-width:1100px;margin:0 auto">
+    <div class="dash-header">
+      <h2>📁 File Saya</h2>
+      <button class="btn btn-primary btn-sm" onclick="goto('home')">⬆ Upload Baru</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+    </div>
+
+    <div class="dash-stats">
+      <div class="stat-card"><div class="stat-icon">📁</div><div class="stat-val" id="stat-total-files">0</div><div class="stat-lbl">Total File</div></div>
+      <div class="stat-card"><div class="stat-icon">💾</div><div class="stat-val" id="stat-storage">0 MB</div><div class="stat-lbl">Storage Dipakai</div></div>
+      <div class="stat-card"><div class="stat-icon">⬇</div><div class="stat-val" id="stat-downloads">0</div><div class="stat-lbl">Total Unduhan</div></div>
+      <div class="stat-card"><div class="stat-icon">👁</div><div class="stat-val" id="stat-views">0</div><div class="stat-lbl">Total Views</div></div>
+    </div>
+
+    <!-- Storage bar -->
+    <div class="storage-bar-wrap">
+      <div class="storage-bar-label">
+        <span>💾 Penggunaan Storage</span>
+        <span id="storage-bar-text">0 MB dari ∞</span>
+      </div>
+      <div class="storage-bar-bg">
+        <div class="storage-bar-fill" id="storage-bar-fill" style="width:1%"></div>
+      </div>
+    </div>
+
+    <div class="files-toolbar">
+      <input class="input" id="dash-search" placeholder="🔍 Cari file..." oninput="filterDashFiles(this.value)" style="max-width:240px">
+      <select class="select" id="dash-sort" onchange="sortDashFiles(this.value)" style="max-width:160px">
+        <option value="newest">Terbaru</option>
+        <option value="oldest">Terlama</option>
+        <option value="name">Nama A-Z</option>
+        <option value="size">Ukuran</option>
+        <option value="downloads">Unduhan</option>
+      </select>
+      <select class="select" id="dash-filter-type" onchange="filterByType(this.value)" style="max-width:140px">
+        <option value="">Semua Tipe</option>
+        <option value="image">🖼 Gambar</option>
+        <option value="video">🎬 Video</option>
+        <option value="audio">🎵 Audio</option>
+        <option value="document">📄 Dokumen</option>
+        <option value="archive">📦 Arsip</option>
+        <option value="app">📱 App (APK)</option>
+      </select>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-list-btn" onclick="setView('list')">☰</button>
+        <button class="view-btn" id="view-grid-btn" onclick="setView('grid')">⊞</button>
+      </div>
+      <button class="btn btn-danger btn-sm hidden" id="bulk-delete-btn" onclick="bulkDelete()">🗑 Hapus (<span id="bulk-count">0</span>)</button>
+    </div>
+
+    <div id="dash-files-container"></div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: DOWNLOAD ══════════ -->
+<div class="page" id="page-download">
+  <div id="dl-loading" style="text-align:center;padding:80px;display:none">
+    <div style="font-size:40px;margin-bottom:16px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+    <p style="color:var(--text2)">Memuat informasi file...</p>
+  </div>
+  <div id="dl-not-found" style="text-align:center;padding:80px;display:none">
+    <div style="font-size:52px;margin-bottom:16px">😢</div>
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">File Tidak Ditemukan</h3>
+    <p style="color:var(--text2);margin-bottom:24px">File mungkin sudah dihapus atau link tidak valid.</p>
+    <button class="btn btn-primary" onclick="goto('home')">Kembali ke Beranda</button>
+  </div>
+  <div id="dl-main" class="dl-layout" style="display:none">
+    <!-- Left -->
+    <div>
+      <div class="dl-hero">
+        <div class="dl-hero-header">
+          <div class="dl-file-icon" id="dl-icon">APK</div>
+          <div style="flex:1;min-width:0">
+            <div class="dl-file-name" id="dl-filename">filename.apk</div>
+            <div class="dl-file-badges">
+              <span class="badge badge-blue" id="dl-size-badge">0 MB</span>
+              <span class="badge badge-green" id="dl-type-badge">FILE</span>
+              <span class="badge badge-green" id="dl-visibility-badge">✓ Publik</span>
+              <span class="badge badge-yellow" id="dl-expiry-badge" style="display:none">⏱ Expired</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dl-hero-body">
+          <!-- File Preview -->
+          <div class="preview-box" id="dl-preview-box" style="display:none"></div>
+
+          <!-- Timer -->
+          <div class="dl-timer" id="dl-timer">
+            <div class="timer-ring">
+              <svg width="52" height="52" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="22" fill="none" stroke="var(--border2)" stroke-width="3"/>
+                <circle id="timer-arc" cx="26" cy="26" r="22" fill="none" stroke="var(--a3)" stroke-width="3" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="138.23"/>
+              </svg>
+              <div class="timer-ring-num" id="timer-num">7</div>
+            </div>
+            <div class="dl-timer-info">
+              <h4>⏳ Menyiapkan unduhan...</h4>
+              <p>Harap tunggu sebentar, link unduhan sedang disiapkan.</p>
+            </div>
+          </div>
+
+          <!-- Password Gate -->
+          <div class="pw-gate hidden" id="dl-pw-gate">
+            <h4>🔐 File ini dilindungi kata sandi</h4>
+            <div class="input-group">
+              <div class="pw-toggle" style="flex:1">
+                <input type="password" class="input" id="dl-pw-input" placeholder="Masukkan kata sandi..." onkeydown="if(event.key==='Enter')checkPassword()">
+                <button class="pw-toggle-btn" onclick="togglePwVis('dl-pw-input',this)">👁</button>
+              </div>
+              <button class="btn btn-primary" onclick="checkPassword()">Buka</button>
+            </div>
+          </div>
+
+          <!-- Download Button -->
+          <div class="dl-btn-wrap">
+            <button class="dl-main-btn" id="dl-main-btn" disabled onclick="triggerDownload()">
+              <span id="dl-btn-icon">⏳</span>
+              <div>
+                <div id="dl-btn-text">Menyiapkan...</div>
+                <div class="dl-btn-sub" id="dl-btn-sub">— MB</div>
+              </div>
+            </button>
+            <div class="dl-mirrors hidden" id="dl-mirrors">
+              <button class="btn btn-ghost btn-sm" onclick="triggerDownload()">🌐 Download Langsung</button>
+              <button class="btn btn-ghost btn-sm" onclick="copyDirectURL()">🔗 Salin URL Langsung</button>
+              <button class="btn btn-ghost btn-sm" onclick="showEmbedModal()">📋 Embed Code</button>
+            </div>
+          </div>
+
+          <!-- Download Progress (real) -->
+          <div id="dl-real-progress" style="display:none;margin-bottom:16px">
+            <div class="progress-bar" style="height:6px;margin-bottom:6px"><div class="progress-fill" id="dl-real-bar" style="width:0%;background:linear-gradient(90deg,var(--a),var(--green))"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">
+              <span id="dl-real-pct">0%</span><span id="dl-real-speed">—</span><span id="dl-real-eta">—</span>
+            </div>
+          </div>
+
+          <!-- Share -->
+          <div class="share-row">
+            <span>🔗</span>
+            <input class="share-url" id="dl-share-url" value="" readonly onclick="this.select()">
+            <div class="share-socials">
+              <button class="btn-icon" onclick="copyShareLink()" title="Salin">📋</button>
+              <button class="btn-icon" onclick="shareWA()" title="WhatsApp">💬</button>
+              <button class="btn-icon" onclick="shareTelegram()" title="Telegram">✈️</button>
+              <button class="btn-icon" onclick="shareTwitter()" title="Twitter/X">🐦</button>
+              <button class="btn-icon" onclick="shareEmail()" title="Email">📧</button>
+              <button class="btn-icon" onclick="showQR()" title="QR Code">📷</button>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('details',this)">Detail</button>
+            <button class="tab-btn" onclick="switchTab('desc',this)">Deskripsi</button>
+            <button class="tab-btn" onclick="switchTab('virus',this)">Virus Scan</button>
+            <button class="tab-btn" onclick="switchTab('embed',this)">Embed</button>
+            <button class="tab-btn" onclick="switchTab('comments',this)">Komentar <span id="comment-count-badge">(0)</span></button>
+          </div>
+
+          <div class="tab-pane active" id="tab-details">
+            <table class="detail-tbl">
+              <tr><td>Nama File</td><td id="tbl-name" style="word-break:break-all">—</td></tr>
+              <tr><td>Ukuran</td><td id="tbl-size">—</td></tr>
+              <tr><td>Tipe</td><td id="tbl-type">—</td></tr>
+              <tr><td>Diupload</td><td id="tbl-date">—</td></tr>
+              <tr><td>Pengunggah</td><td id="tbl-uploader">—</td></tr>
+              <tr><td>Total Unduhan</td><td id="tbl-downloads" class="success">0</td></tr>
+              <tr><td>Kedaluwarsa</td><td id="tbl-expiry">Tidak pernah</td></tr>
+              <tr><td>ID File</td><td id="tbl-id" class="mono" style="font-size:11px;color:var(--text3)">—</td></tr>
+            </table>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="dl-tags"></div>
+            <div style="display:flex;justify-content:flex-end;margin-top:12px">
+              <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:5px" onclick="toast('⚠️ Laporan terkirim!','warning')">⚠️ Laporkan File</button>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="tab-desc">
+            <div id="dl-description" style="font-size:14px;color:var(--text2);line-height:1.8">Tidak ada deskripsi.</div>
+          </div>
+
+          <div class="tab-pane" id="tab-virus">
+            <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;margin-bottom:16px">
+              <span style="font-size:32px">🛡️</span>
+              <div><div style="font-weight:700;color:var(--green);margin-bottom:3px">✓ File Bersih — 0/68 Terdeteksi</div><div style="font-size:13px;color:var(--text2)">Dipindai otomatis saat upload</div></div>
+            </div>
+            <table class="detail-tbl">
+              <tr><td>VirusTotal</td><td class="success">✓ 0/68 Clean</td></tr>
+              <tr><td>Kaspersky</td><td class="success">✓ No threats</td></tr>
+              <tr><td>Avast</td><td class="success">✓ Clean</td></tr>
+              <tr><td>ESET NOD32</td><td class="success">✓ Not detected</td></tr>
+            </table>
+          </div>
+
+          <div class="tab-pane" id="tab-embed">
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Sematkan tombol download ke website kamu:</p>
+            <div class="embed-code" id="embed-html-code"></div>
+            <button class="btn btn-ghost btn-sm" onclick="copyEmbedCode('embed-html-code')">📋 Salin HTML</button>
+            <div class="embed-code" id="embed-md-code" style="margin-top:12px"></div>
+            <button class="btn btn-ghost btn-sm" onclick="copyEmbedCode('embed-md-code')">📋 Salin Markdown</button>
+          </div>
+
+          <div class="tab-pane" id="tab-comments">
+            <div class="comment-input-row">
+              <div class="comment-avatar" id="comment-avatar" style="background:linear-gradient(135deg,var(--a),var(--purple))">A</div>
+              <div style="flex:1">
+                <textarea class="textarea" id="comment-input" placeholder="Tulis komentar..." style="min-height:70px"></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                  <button class="btn btn-primary btn-sm" onclick="postComment()">Kirim</button>
+                </div>
+              </div>
+            </div>
+            <div id="comments-list"></div>
+            <div id="comments-loading" style="text-align:center;padding:20px;color:var(--text2);font-size:13px;display:none">Memuat komentar...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="dl-sidebar">
+      <div class="widget">
+        <div class="widget-head">📊 Statistik</div>
+        <div class="widget-body">
+          <div class="stat-row2"><span class="stat-lbl2">⬇ Unduhan</span><span class="stat-val2 success" id="dl-stat-downloads">0</span></div>
+          <div class="stat-row2"><span class="stat-lbl2">👁 Dilihat</span><span class="stat-val2" id="dl-stat-views">0</span></div>
+          <div class="stat-row2"><span class="stat-lbl2">💾 Ukuran</span><span class="stat-val2" id="dl-stat-size">—</span></div>
+          <div class="stat-row2"><span class="stat-lbl2">📅 Upload</span><span class="stat-val2" id="dl-stat-date">—</span></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head">📁 File Lain dari Pengunggah</div>
+        <div class="widget-body" style="padding:8px 18px" id="related-files">
+          <div style="text-align:center;padding:20px;font-size:13px;color:var(--text3)">Tidak ada file terkait</div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head">👤 Pengunggah</div>
+        <div class="uploader-card">
+          <div class="uploader-avatar" id="dl-uploader-avatar">?</div>
+          <div class="uploader-name" id="dl-uploader-name">Anonymous</div>
+          <div class="uploader-meta" id="dl-uploader-meta">Member NexDrop</div>
+        </div>
+      </div>
+
+      <div class="widget" id="dl-edit-widget" style="display:none">
+        <div class="widget-head">✏️ Kelola File</div>
+        <div class="widget-body" style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start" onclick="openEditModal()">✏️ Edit Info File</button>
+          <button class="btn btn-danger btn-sm" style="width:100%;justify-content:flex-start" onclick="deleteCurrentFile()">🗑 Hapus File</button>
+        </div>
+      </div>
+
+      <div class="premium-cta">
+        <h4>⚡ Upgrade Premium</h4>
+        <p>Download tanpa batas, kecepatan penuh, tanpa iklan, upload hingga 5GB.</p>
+        <button class="btn btn-primary" style="width:100%" onclick="toast('💎 Fitur segera hadir!','info')">Mulai Gratis 7 Hari</button>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">Lalu Rp29.000/bulan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="font-size:22px;cursor:default">⚡ NexDrop</div>
+        <p>Platform hosting file gratis tercepat. Powered by Firebase. Upload, simpan, dan bagikan file kamu dengan mudah.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Produk</h5>
+        <a href="#" onclick="goto('home');return false">Upload File</a>
+        <a href="#" onclick="goto('dashboard');return false">My Files</a>
+        <a href="#" onclick="toast('💎 Segera hadir!','info');return false">Premium</a>
+        <a href="#" onclick="toast('🔌 API Docs segera!','info');return false">API</a>
+      </div>
+      <div class="footer-col">
+        <h5>Dukungan</h5>
+        <a href="#" onclick="showKeyboardShortcuts();return false">Keyboard Shortcuts</a>
+        <a href="#" onclick="toast('❓ FAQ segera!','info');return false">FAQ</a>
+        <a href="#" onclick="toast('📧 admin@nexdrop.id','info');return false">Kontak</a>
+        <a href="#" onclick="toast('🟢 Semua sistem normal','success');return false">Status Server</a>
+      </div>
+      <div class="footer-col">
+        <h5>Hukum</h5>
+        <a href="#">Privasi</a>
+        <a href="#">Syarat Layanan</a>
+        <a href="#">DMCA</a>
+        <a href="#">Cookie</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 NexDrop. Dibuat dengan ❤️ di Indonesia.</p>
+      <div class="footer-chips">
+        <span class="chip">🔒 SSL</span>
+        <span class="chip">☁️ Firebase</span>
+        <span class="chip">⚡ 99.9% Uptime</span>
+        <span class="chip">🇮🇩 Server ID</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Mobile FAB -->
+<button class="mobile-fab" onclick="goto('home')" title="Upload">⬆</button>
+
+<!-- ══════════ MODALS ══════════ -->
+<!-- Download Progress -->
+<div class="modal-overlay" id="dl-progress-modal">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:44px;margin-bottom:12px">⬇️</div>
+    <h3>Mengunduh File</h3>
+    <div class="sub" id="dl-modal-name">filename</div>
+    <div class="progress-bar" style="margin-bottom:10px;height:6px">
+      <div class="progress-fill" id="dl-modal-bar" style="background:linear-gradient(90deg,var(--a),var(--green));width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);margin-bottom:4px">
+      <span id="dl-modal-pct">0%</span><span id="dl-modal-bytes">0 / 0 MB</span>
+    </div>
+    <div class="dl-speed-grid">
+      <div class="dl-speed-item"><div class="dl-speed-val" id="dl-modal-speed">— MB/s</div><div class="dl-speed-lbl">Kecepatan</div></div>
+      <div class="dl-speed-item"><div class="dl-speed-val" id="dl-modal-eta">—</div><div class="dl-speed-lbl">Sisa Waktu</div></div>
+      <div class="dl-speed-item"><div class="dl-speed-val" id="dl-modal-pct2">0%</div><div class="dl-speed-lbl">Progress</div></div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:20px" onclick="cancelDlModal()">Batalkan</button>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay auth-modal" id="auth-modal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="auth-tab-login" onclick="switchAuthTab('login')">Masuk</div>
+      <div class="auth-tab" id="auth-tab-register" onclick="switchAuthTab('register')">Daftar</div>
+    </div>
+    <div id="auth-login-form" class="auth-form">
+      <div>
+        <label class="label">Email</label>
+        <input type="email" class="input" id="login-email" placeholder="email@kamu.com" onkeydown="if(event.key==='Enter')loginUser()">
+      </div>
+      <div>
+        <label class="label">Kata Sandi</label>
+        <div class="pw-toggle">
+          <input type="password" class="input" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginUser()">
+          <button class="pw-toggle-btn" onclick="togglePwVis('login-pass',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="loginUser()">Masuk</button>
+      <div class="auth-divider">atau</div>
+      <button class="btn btn-ghost" onclick="loginGoogle()">🔑 Masuk dengan Google</button>
+      <button class="btn btn-ghost" onclick="loginAnon()">👤 Lanjut sebagai Tamu</button>
+    </div>
+    <div id="auth-register-form" class="auth-form hidden">
+      <div>
+        <label class="label">Nama Tampilan</label>
+        <input type="text" class="input" id="reg-name" placeholder="Nama Kamu">
+      </div>
+      <div>
+        <label class="label">Email</label>
+        <input type="email" class="input" id="reg-email" placeholder="email@kamu.com">
+      </div>
+      <div>
+        <label class="label">Kata Sandi (min. 6 karakter)</label>
+        <div class="pw-toggle">
+          <input type="password" class="input" id="reg-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')registerUser()">
+          <button class="pw-toggle-btn" onclick="togglePwVis('reg-pass',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="registerUser()">Buat Akun</button>
+      <div class="auth-divider">atau</div>
+      <button class="btn btn-ghost" onclick="loginGoogle()">🔑 Daftar dengan Google</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal-overlay" id="qr-modal" onclick="this.classList.remove('active')">
+  <div class="modal" style="text-align:center" onclick="event.stopPropagation()">
+    <h3 style="margin-bottom:8px">📷 QR Code</h3>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Scan untuk membuka halaman download</p>
+    <div id="qr-container" style="display:inline-block;background:#fff;padding:16px;border-radius:12px;margin-bottom:20px"></div>
+    <br>
+    <button class="btn btn-ghost" onclick="document.getElementById('qr-modal').classList.remove('active')">Tutup</button>
+  </div>
+</div>
+
+<!-- Edit File Modal -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Edit File</h3>
+      <button class="modal-close" onclick="document.getElementById('edit-modal').classList.remove('active')">✕</button>
+    </div>
+    <div class="modal-form">
+      <div>
+        <label class="label">Nama File</label>
+        <input type="text" class="input" id="edit-name" placeholder="nama_file.ext">
+      </div>
+      <div>
+        <label class="label">Deskripsi</label>
+        <textarea class="textarea" id="edit-desc" placeholder="Deskripsi file (opsional)..." style="min-height:90px"></textarea>
+      </div>
+      <div>
+        <label class="label">Kata Sandi (kosongkan = tanpa proteksi)</label>
+        <div class="pw-toggle">
+          <input type="password" class="input" id="edit-pw" placeholder="Kata sandi proteksi...">
+          <button class="pw-toggle-btn" onclick="togglePwVis('edit-pw',this)">👁</button>
+        </div>
+      </div>
+      <div>
+        <label class="label">Kedaluwarsa File</label>
+        <select class="select" id="edit-expiry">
+          <option value="0">Tidak pernah kedaluwarsa</option>
+          <option value="86400000">1 Hari</option>
+          <option value="604800000">7 Hari</option>
+          <option value="2592000000">30 Hari</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="edit-public" style="width:16px;height:16px;cursor:pointer">
+        <label for="edit-public" style="cursor:pointer;font-size:14px">File bisa dilihat secara publik</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('edit-modal').classList.remove('active')">Batal</button>
+      <button class="btn btn-primary" onclick="saveFileEdit()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal-overlay" id="shortcuts-modal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <button class="modal-close" onclick="document.getElementById('shortcuts-modal').classList.remove('active')">✕</button>
+    </div>
+    <table class="detail-tbl">
+      <tr><td>Ctrl+U</td><td>Buka pilih file</td></tr>
+      <tr><td>Ctrl+V</td><td>Paste file untuk upload</td></tr>
+      <tr><td>Ctrl+K</td><td>Fokus ke pencarian</td></tr>
+      <tr><td>Escape</td><td>Tutup modal</td></tr>
+      <tr><td>Alt+H</td><td>Ke beranda</td></tr>
+      <tr><td>Alt+D</td><td>Ke dashboard</td></tr>
+      <tr><td>Alt+T</td><td>Toggle tema terang/gelap</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ══════════ SCRIPT ══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+/* ════════════════════════════════
+   FIREBASE INIT
+════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyALWlgAyQXUomwnf520gmdoBMOFbdlWaB0",
+  authDomain: "alamak-ce66a.firebaseapp.com",
+  databaseURL: "https://alamak-ce66a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "alamak-ce66a",
+  storageBucket: "alamak-ce66a.firebasestorage.app",
+  messagingSenderId: "496086877660",
+  appId: "1:496086877660:web:4d758986c878cb15bd7b19",
+  measurementId: "G-5K0BJXCYQD"
+};
+firebase.initializeApp(firebaseConfig);
+const auth    = firebase.auth();
+const db      = firebase.database();
+const storage = firebase.storage();
+
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+let currentUser    = null;
+let currentPage    = 'home';
+let currentFileId  = null;
+let currentFileData= null;
+let dashFiles      = [];
+let viewMode       = 'list';
+let selectedFiles  = new Set();
+let timerInterval  = null;
+let timerVal       = 7;
+let isDarkTheme    = true;
+let dlListeners    = [];
+
+/* ════════════════════════════════
+   THEME TOGGLE  ✨ NEW
+════════════════════════════════ */
+function toggleTheme() {
+  isDarkTheme = !isDarkTheme;
+  document.body.setAttribute('data-theme', isDarkTheme ? '' : 'light');
+  document.getElementById('theme-btn').textContent = isDarkTheme ? '🌙' : '☀️';
+  localStorage.setItem('nd-theme', isDarkTheme ? 'dark' : 'light');
+}
+(function initTheme() {
+  const saved = localStorage.getItem('nd-theme');
+  if (saved === 'light') { isDarkTheme = false; document.body.setAttribute('data-theme','light'); document.getElementById('theme-btn').textContent = '☀️'; }
+})();
+
+/* ════════════════════════════════
+   AUTH
+════════════════════════════════ */
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  updateNavAuth(user);
+  if (currentPage === 'dashboard') loadDashboard();
+  if (user) document.getElementById('auth-modal').classList.remove('active');
+});
+
+function updateNavAuth(user) {
+  const authBtns = document.getElementById('nav-auth-btns');
+  const userArea = document.getElementById('nav-user-area');
+  const avatar   = document.getElementById('nav-avatar');
+  const username = document.getElementById('nav-username');
+  if (user && !user.isAnonymous) {
+    authBtns.classList.add('hidden');
+    userArea.classList.remove('hidden');
+    const name = user.displayName || user.email?.split('@')[0] || 'User';
+    avatar.textContent   = name[0].toUpperCase();
+    username.textContent = name;
+  } else if (user && user.isAnonymous) {
+    authBtns.classList.add('hidden');
+    userArea.classList.remove('hidden');
+    avatar.textContent   = '👤';
+    username.textContent = 'Tamu';
+  } else {
+    authBtns.classList.remove('hidden');
+    userArea.classList.add('hidden');
+  }
+}
+
+function showAuthModal(tab='login') { switchAuthTab(tab); document.getElementById('auth-modal').classList.add('active'); }
+function switchAuthTab(tab) {
+  document.getElementById('auth-login-form').classList.toggle('hidden', tab!=='login');
+  document.getElementById('auth-register-form').classList.toggle('hidden', tab!=='register');
+  document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('auth-tab-register').classList.toggle('active', tab!=='login');
+}
+
+async function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) { toast('Isi email dan kata sandi!','warning'); return; }
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    toast('✅ Berhasil masuk!','success');
+    document.getElementById('auth-modal').classList.remove('active');
+  } catch(e) { toast('❌ ' + getAuthError(e.code),'error'); }
+}
+
+async function registerUser() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  if (!name||!email||!pass) { toast('Isi semua kolom!','warning'); return; }
+  if (pass.length < 6) { toast('Kata sandi minimal 6 karakter!','warning'); return; }
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    await db.ref('users/'+cred.user.uid).set({ name, email, createdAt: Date.now() });
+    toast('🎉 Akun berhasil dibuat!','success');
+    document.getElementById('auth-modal').classList.remove('active');
+  } catch(e) { toast('❌ ' + getAuthError(e.code),'error'); }
+}
+
+async function loginGoogle() {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+    toast('✅ Login Google berhasil!','success');
+    document.getElementById('auth-modal').classList.remove('active');
+  } catch(e) { toast('❌ Gagal login Google: ' + e.message,'error'); }
+}
+
+async function loginAnon() {
+  try {
+    await auth.signInAnonymously();
+    toast('👤 Masuk sebagai tamu','info');
+    document.getElementById('auth-modal').classList.remove('active');
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+
+async function logout() { await auth.signOut(); toast('👋 Berhasil keluar','info'); goto('home'); }
+
+function getAuthError(code) {
+  const m = {
+    'auth/user-not-found':'Email tidak terdaftar','auth/wrong-password':'Kata sandi salah',
+    'auth/email-already-in-use':'Email sudah terdaftar','auth/invalid-email':'Format email tidak valid',
+    'auth/weak-password':'Kata sandi terlalu lemah','auth/too-many-requests':'Terlalu banyak percobaan',
+    'auth/popup-closed-by-user':'Login dibatalkan','auth/invalid-credential':'Email atau kata sandi salah'
+  };
+  return m[code] || 'Terjadi kesalahan: ' + code;
+}
+
+/* ════════════════════════════════
+   ROUTING
+════════════════════════════════ */
+function goto(page, fileId=null) {
+  // Clean up realtime listeners
+  dlListeners.forEach(l => l && l.off && l.off());
+  dlListeners = [];
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  currentPage   = page;
+  currentFileId = fileId;
+  window.scrollTo(0,0);
+
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'download' && fileId) loadDownloadPage(fileId);
+}
+
+function handleHash() {
+  const hash = location.hash.replace('#','');
+  if (hash.startsWith('file/')) {
+    const id = hash.replace('file/','');
+    goto('download', id);
+  } else if (hash === 'dashboard') {
+    goto('dashboard');
+  } else if (hash !== '' && currentPage !== 'home') {
+    goto('home');
+  } else if (hash === '') {
+    // Only go home if not already there to avoid clearing upload queue
+    if (currentPage !== 'home') goto('home');
+  }
+}
+window.addEventListener('hashchange', handleHash);
+handleHash();
+
+/* ════════════════════════════════
+   FILE UPLOAD  🐛 BUG FIXED
+════════════════════════════════ */
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-box').classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) uploadFiles(files);
+}
+
+function handleFileChange(e) {
+  if (e.target.files.length) uploadFiles(e.target.files);
+  e.target.value = '';
+}
+
+// ✅ FIX: Paste to upload
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  const fileItems = [];
+  for (const item of items) {
+    if (item.kind === 'file') fileItems.push(item.getAsFile());
+  }
+  if (fileItems.length) {
+    uploadFiles(fileItems);
+    toast('📋 File dari clipboard dideteksi!', 'info');
+  }
+});
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+
+  // ✅ BUG FIX #1: currentUser race condition — assign immediately from credential
+  if (!currentUser) {
+    try {
+      const cred = await auth.signInAnonymously();
+      currentUser = cred.user; // CRITICAL: Set right away, not from onAuthStateChanged
+    } catch(e) {
+      toast('❌ Gagal autentikasi: ' + e.message, 'error');
+      return;
+    }
+  }
+
+  for (const file of files) {
+    if (file.size > 100 * 1024 * 1024) {
+      toast(`❌ ${file.name}: Ukuran melebihi 100MB!`, 'error');
+      continue;
+    }
+    await uploadSingleFile(file);
+  }
+}
+
+function uploadSingleFile(file) {
+  return new Promise((resolve) => {
+    const fileId = db.ref('files').push().key;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const uid = currentUser?.uid || 'anon';
+    const storagePath = `files/${uid}/${fileId}/${file.name}`;
+    const ref = storage.ref(storagePath);
+
+    createQueueItem(fileId, file);
+
+    // ✅ BUG FIX #2: Add metadata for CORS
+    const metadata = {
+      contentType: file.type || 'application/octet-stream',
+      customMetadata: { uploadedBy: uid }
+    };
+
+    const task = ref.put(file, metadata);
+    let lastBytes = 0;
+    let lastTime = Date.now();
+    let speedDisplay = '';
+
+    task.on('state_changed',
+      snap => {
+        // ✅ BUG FIX #3: NaN protection
+        const total = snap.totalBytes || 1;
+        const pct = Math.min(100, (snap.bytesTransferred / total * 100));
+
+        // Upload speed calculation
+        const now = Date.now();
+        const elapsed = (now - lastTime) / 1000;
+        if (elapsed > 0.5) {
+          const bytesPerSec = (snap.bytesTransferred - lastBytes) / elapsed;
+          speedDisplay = formatSize(bytesPerSec) + '/s';
+          lastBytes = snap.bytesTransferred;
+          lastTime = now;
+        }
+
+        updateQueueProgress(fileId, pct, speedDisplay, snap.bytesTransferred, snap.totalBytes);
+      },
+      err => {
+        // ✅ BUG FIX #4: Detect Firebase Storage Rules errors
+        if (err.code === 'storage/unauthorized') {
+          document.getElementById('rules-warning').style.display = 'block';
+          updateQueueError(fileId, '❌ Akses ditolak — Firebase Storage Rules perlu dikonfigurasi');
+          toast('❌ Upload ditolak: Perlu konfigurasi Firebase Storage Rules!', 'error');
+        } else if (err.code === 'storage/canceled') {
+          updateQueueError(fileId, 'Upload dibatalkan');
+        } else {
+          updateQueueError(fileId, err.message + ' [' + err.code + ']');
+          toast('❌ Upload gagal: ' + err.message, 'error');
+        }
+        resolve();
+      },
+      async () => {
+        try {
+          const url = await ref.getDownloadURL();
+          const meta = {
+            name: file.name, size: file.size,
+            type: file.type || 'application/octet-stream', ext,
+            storagePath, downloadURL: url,
+            uploadedAt: Date.now(),
+            uploadedBy: currentUser?.uid || 'anon',
+            uploaderName: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Anonymous',
+            downloads: 0, views: 0,
+            password: '', description: '',
+            isPublic: true, expiresAt: 0,
+            starred: false
+          };
+          await db.ref('files/'+fileId).set(meta);
+          updateQueueDone(fileId, fileId, file.name);
+          toast('✅ ' + file.name + ' berhasil diupload!', 'success');
+          // Refresh recent files
+          setTimeout(loadRecentFiles, 1000);
+          resolve();
+        } catch(e) {
+          updateQueueError(fileId, e.message);
+          toast('❌ Gagal menyimpan metadata: ' + e.message, 'error');
+          resolve();
+        }
+      }
+    );
+  });
+}
+
+// ✅ NEW: Upload from URL
+async function uploadFromURL() {
+  const urlInput = document.getElementById('url-input');
+  const url = urlInput.value.trim();
+  if (!url) { toast('❗ Masukkan URL file!', 'warning'); return; }
+  if (!url.startsWith('http')) { toast('❌ URL tidak valid!', 'error'); return; }
+
+  if (!currentUser) {
+    try { const cred = await auth.signInAnonymously(); currentUser = cred.user; } catch(e) { return; }
+  }
+
+  toast('⏳ Mengunduh dari URL...', 'info');
+  urlInput.value = '';
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Gagal mengambil file (HTTP ' + resp.status + ')');
+    const blob = await resp.blob();
+    const filename = url.split('/').pop().split('?')[0] || 'file_from_url';
+    const file = new File([blob], filename, { type: blob.type });
+    await uploadFiles([file]);
+  } catch(e) {
+    toast('❌ Gagal import URL: ' + e.message, 'error');
+  }
+}
+
+function createQueueItem(id, file) {
+  // Navigate to home page if not there
+  if (currentPage !== 'home') { goto('home'); }
+  const container = document.getElementById('upload-queue');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const div = document.createElement('div');
+  div.className = 'queue-item';
+  div.id = 'qi-'+id;
+  div.innerHTML = `
+    <div class="queue-item-header">
+      <div class="queue-icon ${getIconClass(ext)}">${ext.toUpperCase().slice(0,4)}</div>
+      <div class="queue-name">${escHtml(file.name)}</div>
+      <div class="queue-size">${formatSize(file.size)}</div>
+      <div class="queue-status uploading" id="qs-${id}">⬆ 0%</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="qp-${id}" style="width:0%;background:var(--a)"></div></div>
+    <div class="queue-speed" id="qspd-${id}">Menginisialisasi...</div>
+    <div class="queue-link hidden" id="ql-${id}"></div>`;
+  container.appendChild(div);
+  return div;
+}
+
+function updateQueueProgress(id, pct, speed, bytesT, totalB) {
+  const bar    = document.getElementById('qp-'+id);
+  const status = document.getElementById('qs-'+id);
+  const spd    = document.getElementById('qspd-'+id);
+  if (bar)    bar.style.width = pct.toFixed(1) + '%';
+  if (status) status.textContent = '⬆ ' + Math.floor(pct) + '%';
+  if (spd && speed) spd.textContent = speed + ' · ' + formatSize(bytesT) + ' / ' + formatSize(totalB);
+}
+
+function updateQueueDone(queueId, fileId, fname) {
+  const status = document.getElementById('qs-'+queueId);
+  const bar    = document.getElementById('qp-'+queueId);
+  const link   = document.getElementById('ql-'+queueId);
+  const spd    = document.getElementById('qspd-'+queueId);
+  const shareURL = location.origin + location.pathname + '#file/' + fileId;
+  if (status) { status.textContent = '✓ Selesai'; status.className = 'queue-status done'; }
+  if (bar)    { bar.style.width='100%'; bar.style.background='var(--green)'; }
+  if (spd)    spd.textContent = '✅ Upload selesai!';
+  if (link) {
+    link.classList.remove('hidden');
+    link.innerHTML = `🔗 <a href="${shareURL}" onclick="goto('download','${fileId}');return false">${shareURL}</a>
+      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="navigator.clipboard.writeText('${shareURL}');toast('📋 Link disalin!','success')">Salin</button>
+      <button class="btn btn-ghost btn-sm" onclick="goto('download','${fileId}')">Lihat</button>`;
+  }
+}
+
+function updateQueueError(id, msg) {
+  const status = document.getElementById('qs-'+id);
+  const bar    = document.getElementById('qp-'+id);
+  const spd    = document.getElementById('qspd-'+id);
+  if (status) { status.textContent = '✗ Error'; status.className = 'queue-status error'; status.title = msg; }
+  if (bar)    bar.style.background = 'var(--red)';
+  if (spd)    spd.textContent = msg;
+}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+async function loadDashboard() {
+  const prompt  = document.getElementById('dashboard-login-prompt');
+  const content = document.getElementById('dashboard-content');
+
+  if (!currentUser || currentUser.isAnonymous) {
+    prompt.classList.remove('hidden');
+    content.style.display = 'none';
+    return;
+  }
+  prompt.classList.add('hidden');
+  content.style.display = '';
+
+  const snap = await db.ref('files').orderByChild('uploadedBy').equalTo(currentUser.uid).once('value');
+  dashFiles = [];
+  snap.forEach(c => dashFiles.push({ id: c.key, ...c.val() }));
+  dashFiles.sort((a,b) => b.uploadedAt - a.uploadedAt);
+  renderDashFiles(dashFiles);
+  updateDashStats(dashFiles);
+}
+
+function updateDashStats(files) {
+  const totalSize = files.reduce((s,f) => s+(f.size||0), 0);
+  const totalDL   = files.reduce((s,f) => s+(f.downloads||0), 0);
+  const totalViews= files.reduce((s,f) => s+(f.views||0), 0);
+  document.getElementById('stat-total-files').textContent = files.length;
+  document.getElementById('stat-storage').textContent     = formatSize(totalSize);
+  document.getElementById('stat-downloads').textContent   = totalDL.toLocaleString();
+  document.getElementById('stat-views').textContent       = totalViews.toLocaleString();
+
+  // ✅ NEW: Storage usage bar
+  document.getElementById('storage-bar-text').textContent = formatSize(totalSize) + ' terpakai';
+  const pct = Math.min(100, (totalSize / (1024*1024*1024)) * 100); // out of 1GB visual
+  document.getElementById('storage-bar-fill').style.width = Math.max(1, pct) + '%';
+}
+
+function renderDashFiles(files) {
+  const container = document.getElementById('dash-files-container');
+  if (!files.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>Belum ada file</h3><p>Upload file pertama kamu!</p><button class="btn btn-primary" style="margin-top:16px" onclick="goto('home')">Upload Sekarang</button></div>`;
+    return;
+  }
+  if (viewMode === 'list') renderListView(container, files);
+  else renderGridView(container, files);
+}
+
+function renderListView(container, files) {
+  let html = `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden"><table class="files-table"><thead><tr>
+    <th style="width:36px"><input type="checkbox" onchange="toggleAll(this)"></th>
+    <th onclick="sortDashFiles('name')">Nama File ↕</th>
+    <th onclick="sortDashFiles('size')">Ukuran ↕</th>
+    <th onclick="sortDashFiles('newest')">Diupload ↕</th>
+    <th onclick="sortDashFiles('downloads')">Unduhan ↕</th>
+    <th>Aksi</th>
+  </tr></thead><tbody>`;
+  files.forEach(f => {
+    const ext = f.ext || f.name?.split('.').pop().toLowerCase() || 'file';
+    const expired = f.expiresAt && f.expiresAt > 0 && Date.now() > f.expiresAt;
+    html += `<tr>
+      <td><input type="checkbox" class="file-checkbox" value="${f.id}" onchange="toggleSelect('${f.id}',this.checked)"></td>
+      <td><div class="flex gap-8">
+        <div class="file-row-icon ${getIconClass(ext)}">${ext.toUpperCase().slice(0,4)}</div>
+        <div>
+          <div class="file-row-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+          <div class="small muted">${f.type||'unknown'} ${expired?'<span style="color:var(--red)">• Expired</span>':''} ${f.isPublic===false?'<span style="color:var(--yellow)">• Privat</span>':''}</div>
+        </div>
+      </div></td>
+      <td class="muted">${formatSize(f.size)}</td>
+      <td class="muted small">${formatDateShort(f.uploadedAt)}</td>
+      <td><span class="success">${(f.downloads||0).toLocaleString()}</span></td>
+      <td>
+        <div class="file-row-actions">
+          <button class="star-btn" onclick="toggleStar('${f.id}','${f.starred?'true':'false'}')" title="${f.starred?'Hapus bintang':'Bintangi'}">${f.starred?'⭐':'☆'}</button>
+          <button class="btn-icon" onclick="goto('download','${f.id}')" title="Lihat">👁</button>
+          <button class="btn-icon" onclick="copyFileLink('${f.id}')" title="Salin Link">🔗</button>
+          <button class="btn-icon" onclick="openEditModalDash('${f.id}')" title="Edit">✏️</button>
+          <button class="btn-icon" onclick="deleteFile('${f.id}','${f.storagePath}')" title="Hapus" style="color:var(--red)">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderGridView(container, files) {
+  let html = '<div class="files-grid">';
+  files.forEach(f => {
+    const ext = f.ext || f.name?.split('.').pop().toLowerCase() || 'file';
+    html += `<div class="file-grid-card" onclick="goto('download','${f.id}')">
+      <div class="file-grid-icon ${getIconClass(ext)}">${ext.toUpperCase().slice(0,4)}</div>
+      <div class="file-grid-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+      <div class="file-grid-meta">${formatSize(f.size)} · ⬇${f.downloads||0}</div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('view-list-btn').classList.toggle('active', mode==='list');
+  document.getElementById('view-grid-btn').classList.toggle('active', mode==='grid');
+  renderDashFiles(dashFiles);
+}
+
+function filterDashFiles(q) {
+  const filtered = dashFiles.filter(f => f.name?.toLowerCase().includes(q.toLowerCase()));
+  renderDashFiles(filtered);
+}
+
+// ✅ NEW: Filter by file type
+function filterByType(type) {
+  if (!type) { renderDashFiles(dashFiles); return; }
+  const typeMap = {
+    image: ['jpg','jpeg','png','gif','webp','bmp','svg'],
+    video: ['mp4','mkv','avi','mov','webm','flv'],
+    audio: ['mp3','wav','flac','aac','ogg','m4a'],
+    document: ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md'],
+    archive: ['zip','rar','7z','tar','gz'],
+    app: ['apk','exe','msi','deb','dmg']
+  };
+  const exts = typeMap[type] || [];
+  const filtered = dashFiles.filter(f => exts.includes((f.ext||'').toLowerCase()));
+  renderDashFiles(filtered);
+}
+
+function sortDashFiles(by) {
+  const sorted = [...dashFiles];
+  if (by==='name')       sorted.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  else if (by==='size')  sorted.sort((a,b) => (b.size||0)-(a.size||0));
+  else if (by==='downloads') sorted.sort((a,b) => (b.downloads||0)-(a.downloads||0));
+  else if (by==='oldest') sorted.sort((a,b) => a.uploadedAt-b.uploadedAt);
+  else sorted.sort((a,b) => b.uploadedAt-a.uploadedAt);
+  renderDashFiles(sorted);
+}
+
+function toggleSelect(id, checked) {
+  checked ? selectedFiles.add(id) : selectedFiles.delete(id);
+  const btn = document.getElementById('bulk-delete-btn');
+  const cnt = document.getElementById('bulk-count');
+  if (selectedFiles.size > 0) { btn.classList.remove('hidden'); cnt.textContent = selectedFiles.size; }
+  else { btn.classList.add('hidden'); }
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.file-checkbox').forEach(c => {
+    c.checked = cb.checked;
+    toggleSelect(c.value, cb.checked);
+  });
+}
+
+async function deleteFile(id, path) {
+  if (!confirm('Hapus file ini?')) return;
+  try {
+    await db.ref('files/'+id).remove();
+    if (path) await storage.ref(path).delete().catch(()=>{});
+    toast('🗑 File dihapus','info');
+    await loadDashboard();
+  } catch(e) { toast('❌ Gagal hapus: '+e.message,'error'); }
+}
+
+async function deleteCurrentFile() {
+  if (!currentFileData) return;
+  if (!confirm('Hapus file ini permanen?')) return;
+  await deleteFile(currentFileData.id, currentFileData.storagePath);
+  goto('dashboard');
+}
+
+async function bulkDelete() {
+  if (!confirm(`Hapus ${selectedFiles.size} file?`)) return;
+  for (const id of selectedFiles) {
+    const snap = await db.ref('files/'+id).once('value');
+    const data = snap.val();
+    if (data?.storagePath) await storage.ref(data.storagePath).delete().catch(()=>{});
+    await db.ref('files/'+id).remove();
+  }
+  selectedFiles.clear();
+  toast('🗑 File dihapus','info');
+  await loadDashboard();
+}
+
+function copyFileLink(id) {
+  const url = location.origin + location.pathname + '#file/' + id;
+  navigator.clipboard.writeText(url).then(() => toast('📋 Link disalin!','success'));
+}
+
+// ✅ NEW: Star/favorite files
+async function toggleStar(id, isStarred) {
+  const newVal = isStarred === 'true' ? false : true;
+  await db.ref('files/'+id+'/starred').set(newVal);
+  toast(newVal ? '⭐ File dibintangi!' : '☆ Bintang dihapus', 'info');
+  await loadDashboard();
+}
+
+/* ════════════════════════════════
+   EDIT FILE MODAL  ✨ NEW
+════════════════════════════════ */
+function openEditModal() {
+  if (!currentFileData) return;
+  const f = currentFileData;
+  document.getElementById('edit-name').value   = f.name || '';
+  document.getElementById('edit-desc').value   = f.description || '';
+  document.getElementById('edit-pw').value     = f.password || '';
+  document.getElementById('edit-expiry').value = f.expiresAt && f.expiresAt > 0 ? '0' : '0';
+  document.getElementById('edit-public').checked = f.isPublic !== false;
+  document.getElementById('edit-modal').classList.add('active');
+}
+
+function openEditModalDash(id) {
+  const f = dashFiles.find(x => x.id === id);
+  if (!f) return;
+  currentFileData = { ...f };
+  openEditModal();
+}
+
+async function saveFileEdit() {
+  if (!currentFileData) return;
+  const name    = document.getElementById('edit-name').value.trim();
+  const desc    = document.getElementById('edit-desc').value.trim();
+  const pw      = document.getElementById('edit-pw').value;
+  const expiry  = parseInt(document.getElementById('edit-expiry').value) || 0;
+  const isPublic= document.getElementById('edit-public').checked;
+
+  if (!name) { toast('❗ Nama file tidak boleh kosong!', 'warning'); return; }
+
+  const expiresAt = expiry > 0 ? Date.now() + expiry : 0;
+  try {
+    await db.ref('files/'+currentFileData.id).update({ name, description: desc, password: pw, expiresAt, isPublic });
+    toast('✅ File berhasil diperbarui!', 'success');
+    document.getElementById('edit-modal').classList.remove('active');
+    // Refresh
+    if (currentPage === 'download') loadDownloadPage(currentFileData.id);
+    else loadDashboard();
+  } catch(e) { toast('❌ Gagal menyimpan: '+e.message,'error'); }
+}
+
+/* ════════════════════════════════
+   RECENT PUBLIC FILES  ✨ NEW
+════════════════════════════════ */
+async function loadRecentFiles() {
+  const grid = document.getElementById('recent-files-grid');
+  try {
+    const snap = await db.ref('files').orderByChild('isPublic').equalTo(true).limitToLast(8).once('value');
+    const files = [];
+    snap.forEach(c => files.push({ id: c.key, ...c.val() }));
+    files.reverse();
+
+    // Update home stats
+    document.getElementById('stat-pub-files').textContent = files.length + '+';
+    const totalDL = files.reduce((s,f)=>s+(f.downloads||0),0);
+    document.getElementById('stat-pub-dl').textContent = totalDL.toLocaleString();
+
+    if (!files.length) { grid.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px;grid-column:1/-1">Belum ada file publik</div>'; return; }
+    grid.innerHTML = files.map(f => {
+      const ext = f.ext || f.name?.split('.').pop().toLowerCase() || 'file';
+      return `<div class="recent-card" onclick="goto('download','${f.id}')">
+        <div class="file-row-icon ${getIconClass(ext)}" style="width:34px;height:34px;border-radius:8px;font-size:11px;flex-shrink:0">${ext.toUpperCase().slice(0,4)}</div>
+        <div class="recent-card-info">
+          <div class="recent-card-name">${escHtml(f.name)}</div>
+          <div class="recent-card-meta">${formatSize(f.size)} · ⬇${f.downloads||0}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px;grid-column:1/-1">Gagal memuat file</div>';
+  }
+}
+loadRecentFiles();
+
+/* ════════════════════════════════
+   DOWNLOAD PAGE
+════════════════════════════════ */
+async function loadDownloadPage(fileId) {
+  document.getElementById('dl-loading').style.display='block';
+  document.getElementById('dl-not-found').style.display='none';
+  document.getElementById('dl-main').style.display='none';
+  clearInterval(timerInterval);
+  timerVal = 7;
+
+  try {
+    const snap = await db.ref('files/'+fileId).once('value');
+    const data = snap.val();
+    if (!data) {
+      document.getElementById('dl-loading').style.display='none';
+      document.getElementById('dl-not-found').style.display='block';
+      return;
+    }
+
+    // Check expiry
+    if (data.expiresAt && data.expiresAt > 0 && Date.now() > data.expiresAt) {
+      document.getElementById('dl-loading').style.display='none';
+      document.getElementById('dl-not-found').innerHTML = '<div style="font-size:52px;margin-bottom:16px">⏱️</div><h3 style="font-size:20px;font-weight:700;margin-bottom:8px">File Sudah Kedaluwarsa</h3><p style="color:var(--text2);margin-bottom:24px">File ini telah dihapus otomatis sesuai pengaturan.</p><button class="btn btn-primary" onclick="goto(\'home\')">Kembali</button>';
+      document.getElementById('dl-not-found').style.display='block';
+      return;
+    }
+
+    currentFileData = { id: fileId, ...data };
+    document.getElementById('dl-loading').style.display='none';
+    document.getElementById('dl-main').style.display='grid';
+
+    db.ref('files/'+fileId+'/views').transaction(v => (v||0)+1);
+
+    populateDownloadPage(currentFileData);
+    loadComments(fileId);
+    loadRelatedFiles(data.uploadedBy);
+    startTimer();
+
+    // Show edit widget if owner
+    if (currentUser && currentUser.uid === data.uploadedBy) {
+      document.getElementById('dl-edit-widget').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('dl-loading').style.display='none';
+    document.getElementById('dl-not-found').style.display='block';
+    toast('❌ Error: '+e.message,'error');
+  }
+}
+
+function populateDownloadPage(data) {
+  const ext      = data.ext || data.name?.split('.').pop().toLowerCase() || 'file';
+  const shareURL = location.origin + location.pathname + '#file/' + data.id;
+
+  const icon = document.getElementById('dl-icon');
+  icon.textContent = ext.toUpperCase().slice(0,4);
+  icon.className   = 'dl-file-icon ' + getIconClass(ext);
+
+  document.getElementById('dl-filename').textContent    = data.name;
+  document.getElementById('dl-size-badge').textContent  = formatSize(data.size);
+  document.getElementById('dl-type-badge').textContent  = ext.toUpperCase();
+  document.getElementById('dl-visibility-badge').textContent = data.isPublic!==false ? '🌐 Publik' : '🔒 Privat';
+  document.getElementById('dl-btn-sub').textContent     = formatSize(data.size);
+  document.getElementById('dl-modal-name').textContent  = data.name;
+  document.getElementById('dl-share-url').value         = shareURL;
+
+  // Expiry badge
+  const eb = document.getElementById('dl-expiry-badge');
+  if (data.expiresAt && data.expiresAt > 0) {
+    eb.style.display = '';
+    const remaining = data.expiresAt - Date.now();
+    eb.textContent = remaining > 0 ? `⏱ Exp: ${timeAgo(data.expiresAt - remaining*2)}` : '❌ Expired';
+  }
+
+  // ✅ NEW: File Preview
+  setupPreview(data, ext);
+
+  // Stats
+  const dlCount = document.getElementById('dl-stat-downloads');
+  const l1 = db.ref('files/'+data.id+'/downloads').on('value', v => {
+    const n = v.val()||0;
+    if(dlCount) dlCount.textContent = n.toLocaleString();
+    document.getElementById('tbl-downloads').textContent = n.toLocaleString();
+  });
+  const l2 = db.ref('files/'+data.id+'/views').on('value', v => {
+    const el = document.getElementById('dl-stat-views');
+    if(el) el.textContent = (v.val()||0).toLocaleString();
+  });
+  dlListeners.push({ off: () => { db.ref('files/'+data.id+'/downloads').off('value', l1); db.ref('files/'+data.id+'/views').off('value', l2); }});
+
+  document.getElementById('dl-stat-size').textContent  = formatSize(data.size);
+  document.getElementById('dl-stat-date').textContent  = formatDateShort(data.uploadedAt);
+
+  // Details table
+  document.getElementById('tbl-name').textContent    = data.name;
+  document.getElementById('tbl-size').textContent    = formatSize(data.size) + ' (' + (data.size||0).toLocaleString() + ' bytes)';
+  document.getElementById('tbl-type').textContent    = data.type || 'unknown';
+  document.getElementById('tbl-date').textContent    = formatDate(data.uploadedAt);
+  document.getElementById('tbl-uploader').textContent= data.uploaderName || 'Anonymous';
+  document.getElementById('tbl-id').textContent      = data.id;
+  document.getElementById('tbl-expiry').textContent  = data.expiresAt && data.expiresAt > 0 ? formatDate(data.expiresAt) : 'Tidak pernah';
+
+  // Tags
+  const tags = document.getElementById('dl-tags');
+  tags.innerHTML = '';
+  [ext.toUpperCase(), data.isPublic!==false?'Publik':'Privat'].forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'badge badge-blue';
+    span.textContent = t;
+    tags.appendChild(span);
+  });
+
+  document.getElementById('dl-description').textContent = data.description || 'Tidak ada deskripsi.';
+  document.getElementById('dl-uploader-name').textContent = data.uploaderName || 'Anonymous';
+  document.getElementById('dl-uploader-avatar').textContent = (data.uploaderName||'A')[0].toUpperCase();
+
+  // ✅ NEW: Embed codes
+  document.getElementById('embed-html-code').textContent =
+    `<a href="${shareURL}" style="display:inline-block;padding:10px 20px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:700">⬇ Download ${data.name} (${formatSize(data.size)})</a>`;
+  document.getElementById('embed-md-code').textContent =
+    `[⬇ Download ${data.name} (${formatSize(data.size)})](${shareURL})`;
+
+  if (data.password) {
+    document.getElementById('dl-pw-gate').classList.remove('hidden');
+    document.getElementById('dl-main-btn').disabled = true;
+    document.getElementById('dl-btn-text').textContent = '🔐 Butuh Kata Sandi';
+    document.getElementById('dl-btn-icon').textContent = '🔐';
+  }
+}
+
+// ✅ NEW: File preview
+function setupPreview(data, ext) {
+  const box = document.getElementById('dl-preview-box');
+  box.innerHTML = '';
+  const imgExts = ['jpg','jpeg','png','gif','webp','bmp','svg'];
+  const vidExts = ['mp4','webm','ogg','mov'];
+  const audExts = ['mp3','wav','flac','ogg','aac','m4a'];
+
+  if (imgExts.includes(ext)) {
+    box.style.display = 'flex';
+    const img = document.createElement('img');
+    img.src = data.downloadURL;
+    img.alt = data.name;
+    img.style.maxHeight = '300px';
+    img.onerror = () => { box.style.display='none'; };
+    box.appendChild(img);
+  } else if (vidExts.includes(ext)) {
+    box.style.display = 'block';
+    const vid = document.createElement('video');
+    vid.src = data.downloadURL;
+    vid.controls = true;
+    vid.style.width = '100%';
+    box.appendChild(vid);
+  } else if (audExts.includes(ext)) {
+    box.style.display = 'flex';
+    box.style.padding = '20px';
+    const aud = document.createElement('audio');
+    aud.src = data.downloadURL;
+    aud.controls = true;
+    aud.style.width = '100%';
+    box.appendChild(aud);
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function startTimer() {
+  const arc   = document.getElementById('timer-arc');
+  const numEl = document.getElementById('timer-num');
+  const timerWrap = document.getElementById('dl-timer');
+  const circumference = 2 * Math.PI * 22;
+  timerVal = 7;
+  arc.style.strokeDashoffset = circumference;
+  timerWrap.style.display = '';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerVal--;
+    numEl.textContent = Math.max(timerVal,0);
+    const progress = (7-timerVal)/7;
+    arc.style.strokeDashoffset = circumference * (1-progress);
+    if (timerVal <= 0) {
+      clearInterval(timerInterval);
+      timerWrap.style.display = 'none';
+      enableDownloadBtn();
+    }
+  }, 1000);
+}
+
+function enableDownloadBtn() {
+  if (currentFileData?.password) return;
+  const btn = document.getElementById('dl-main-btn');
+  btn.disabled = false;
+  document.getElementById('dl-btn-icon').textContent = '⬇️';
+  document.getElementById('dl-btn-text').textContent = 'Download Sekarang';
+  document.getElementById('dl-mirrors').classList.remove('hidden');
+}
+
+async function checkPassword() {
+  const input = document.getElementById('dl-pw-input');
+  const pw = input.value;
+  if (!pw) return;
+  if (pw === currentFileData?.password) {
+    document.getElementById('dl-pw-gate').classList.add('hidden');
+    document.getElementById('dl-timer').style.display = 'none';
+    enableDownloadBtn();
+    toast('🔓 File berhasil dibuka!','success');
+  } else {
+    input.style.borderColor = 'var(--red)';
+    toast('❌ Kata sandi salah!','error');
+    setTimeout(() => input.style.borderColor='', 1000);
+  }
+}
+
+async function triggerDownload() {
+  if (!currentFileData?.downloadURL) return;
+  db.ref('files/'+currentFileData.id+'/downloads').transaction(v => (v||0)+1);
+
+  // ✅ IMPROVED: Show modal + open download
+  const modal = document.getElementById('dl-progress-modal');
+  modal.classList.add('active');
+  const fileSizeMB = (currentFileData.size / 1024 / 1024) || 5;
+  let pct = 0;
+
+  const iv = setInterval(() => {
+    const inc = Math.random() * 6 + 3;
+    pct = Math.min(pct + inc, 95);
+    const done = (pct/100*fileSizeMB).toFixed(1);
+    const speed = (Math.random()*6+2).toFixed(1);
+    const eta = Math.max(0, Math.ceil((fileSizeMB - parseFloat(done))/parseFloat(speed)));
+
+    document.getElementById('dl-modal-bar').style.width = pct+'%';
+    document.getElementById('dl-modal-pct').textContent = Math.floor(pct)+'%';
+    document.getElementById('dl-modal-pct2').textContent = Math.floor(pct)+'%';
+    document.getElementById('dl-modal-bytes').textContent = `${done} / ${fileSizeMB.toFixed(1)} MB`;
+    document.getElementById('dl-modal-speed').textContent = speed+' MB/s';
+    document.getElementById('dl-modal-eta').textContent = eta>60?`${Math.ceil(eta/60)}m${eta%60}s`:`${eta}s`;
+
+    if (pct >= 95) {
+      clearInterval(iv);
+      setTimeout(() => {
+        document.getElementById('dl-modal-bar').style.width='100%';
+        document.getElementById('dl-modal-pct').textContent='100%';
+        setTimeout(() => {
+          modal.classList.remove('active');
+          const a = document.createElement('a');
+          a.href = currentFileData.downloadURL;
+          a.download = currentFileData.name;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          toast('✅ Download dimulai!','success');
+        }, 400);
+      }, 300);
+    }
+  }, 120);
+}
+
+function cancelDlModal() { document.getElementById('dl-progress-modal').classList.remove('active'); }
+
+// ✅ NEW: Copy direct Firebase URL
+function copyDirectURL() {
+  if (!currentFileData?.downloadURL) return;
+  navigator.clipboard.writeText(currentFileData.downloadURL).then(() => toast('🔗 URL langsung disalin!','success'));
+}
+
+/* ════════════════════════════════
+   SEARCH  ✅ IMPROVED
+════════════════════════════════ */
+let searchTimeout = null;
+function handleSearch(q) {
+  clearTimeout(searchTimeout);
+  if (!q.trim() || q.length < 2) { closeSearchDrop(); return; }
+  searchTimeout = setTimeout(() => doSearch(q), 350);
+}
+
+async function doSearch(q) {
+  const dropdown = document.getElementById('search-dropdown');
+  dropdown.innerHTML = '<div class="search-empty">🔍 Mencari...</div>';
+  dropdown.classList.add('open');
+
+  const snap = await db.ref('files').orderByChild('isPublic').equalTo(true).limitToLast(100).once('value');
+  const results = [];
+  snap.forEach(c => {
+    const d = c.val();
+    if (d.name?.toLowerCase().includes(q.toLowerCase())) results.push({ id: c.key, ...d });
+  });
+
+  if (!results.length) {
+    dropdown.innerHTML = `<div class="search-empty">😔 Tidak ada hasil untuk "<b>${escHtml(q)}</b>"</div>`;
+    return;
+  }
+  dropdown.innerHTML = results.slice(0,8).map(f => {
+    const ext = f.ext || f.name?.split('.').pop().toLowerCase() || 'file';
+    return `<div class="search-result-item" onclick="closeSearchDrop();goto('download','${f.id}')">
+      <div class="file-row-icon ${getIconClass(ext)}" style="width:30px;height:30px;border-radius:6px;font-size:10px;flex-shrink:0">${ext.toUpperCase().slice(0,4)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escHtml(f.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${formatSize(f.size)} · ⬇${f.downloads||0}</div>
+      </div>
+    </div>`;
+  }).join('') + (results.length > 8 ? `<div class="search-empty" style="font-size:12px">+${results.length-8} hasil lainnya</div>` : '');
+}
+
+function openSearchDrop() {
+  const q = document.getElementById('search-input').value;
+  if (q.length >= 2) doSearch(q);
+}
+function closeSearchDrop() {
+  document.getElementById('search-dropdown').classList.remove('open');
+}
+
+/* ════════════════════════════════
+   COMMENTS
+════════════════════════════════ */
+async function loadComments(fileId) {
+  const loading = document.getElementById('comments-loading');
+  const list    = document.getElementById('comments-list');
+  loading.style.display = 'block';
+  list.innerHTML = '';
+
+  const snap = await db.ref('comments/'+fileId).orderByChild('createdAt').once('value');
+  const comments = [];
+  snap.forEach(c => comments.push({ id: c.key, ...c.val() }));
+  comments.reverse();
+
+  loading.style.display = 'none';
+  document.getElementById('comment-count-badge').textContent = `(${comments.length})`;
+
+  // Update comment avatar
+  const user = currentUser;
+  if (user && !user.isAnonymous) {
+    const name = user.displayName || user.email?.split('@')[0] || 'A';
+    document.getElementById('comment-avatar').textContent = name[0].toUpperCase();
+  }
+
+  if (!comments.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:14px">Belum ada komentar. Jadilah yang pertama! 💬</div>';
+    return;
+  }
+
+  const colors = ['#3b82f6','#a855f7','#22c55e','#ef4444','#f59e0b','#06b6d4'];
+  list.innerHTML = comments.map(c => {
+    const color = colors[Math.abs((c.author||'A').charCodeAt(0)) % colors.length];
+    return `<div class="comment-item">
+      <div class="comment-avatar" style="background:${color}">${(c.author||'A')[0].toUpperCase()}</div>
+      <div class="comment-item-body">
+        <div class="comment-author">${escHtml(c.author||'Anonymous')} <span>${timeAgo(c.createdAt)}</span></div>
+        <div class="comment-text">${escHtml(c.text||'')}</div>
+        <div class="comment-actions-row">
+          <button class="comment-action" onclick="likeComment('${c.id}',this)">👍 <span>${c.likes||0}</span></button>
+          <button class="comment-action" onclick="document.getElementById('comment-input').focus()">💬 Balas</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function postComment() {
+  const input = document.getElementById('comment-input');
+  const text  = input.value.trim();
+  if (!text) { toast('✏️ Tulis komentar dulu!','warning'); return; }
+  if (!currentUser) { showAuthModal('login'); return; }
+  const author = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Anonymous';
+  await db.ref('comments/'+currentFileId).push({ text, author, createdAt: Date.now(), likes: 0 });
+  input.value = '';
+  toast('💬 Komentar terkirim!','success');
+  loadComments(currentFileId);
+}
+
+async function likeComment(commentId, btn) {
+  await db.ref('comments/'+currentFileId+'/'+commentId+'/likes').transaction(v => (v||0)+1);
+  const span = btn.querySelector('span');
+  if (span) span.textContent = parseInt(span.textContent)+1;
+}
+
+/* ════════════════════════════════
+   RELATED FILES
+════════════════════════════════ */
+async function loadRelatedFiles(uploaderUid) {
+  if (!uploaderUid || uploaderUid === 'anon') return;
+  const snap = await db.ref('files').orderByChild('uploadedBy').equalTo(uploaderUid).limitToLast(6).once('value');
+  const files = [];
+  snap.forEach(c => { if (c.key !== currentFileId) files.push({ id: c.key, ...c.val() }); });
+  const container = document.getElementById('related-files');
+  if (!files.length) return;
+  container.innerHTML = files.slice(0,4).map(f => {
+    const ext = f.ext || f.name?.split('.').pop().toLowerCase() || 'file';
+    return `<a class="related-item" href="#" onclick="goto('download','${f.id}');return false">
+      <div class="file-row-icon ${getIconClass(ext)}" style="width:32px;height:32px;border-radius:7px;font-size:10px">${ext.toUpperCase().slice(0,4)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="related-name">${escHtml(f.name)}</div>
+        <div class="related-size">${formatSize(f.size)} · ⬇${f.downloads||0}</div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+/* ════════════════════════════════
+   SHARE & QR  ✅ IMPROVED
+════════════════════════════════ */
+function copyShareLink() {
+  const url = document.getElementById('dl-share-url').value;
+  navigator.clipboard.writeText(url).then(() => toast('📋 Link disalin!','success'));
+}
+
+function shareWA() {
+  const url = document.getElementById('dl-share-url').value;
+  window.open('https://wa.me/?text='+encodeURIComponent('⬇️ Download file ini di NexDrop:\n'+url), '_blank');
+}
+
+function shareTelegram() {
+  const url = document.getElementById('dl-share-url').value;
+  window.open('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent('Download file ini di NexDrop'), '_blank');
+}
+
+// ✅ NEW: Share Twitter & Email
+function shareTwitter() {
+  const url  = document.getElementById('dl-share-url').value;
+  const name = currentFileData?.name || 'file';
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(`⬇️ Download "${name}" gratis di NexDrop: ${url}`), '_blank');
+}
+
+function shareEmail() {
+  const url  = document.getElementById('dl-share-url').value;
+  const name = currentFileData?.name || 'file';
+  window.location.href = `mailto:?subject=${encodeURIComponent('Download: '+name)}&body=${encodeURIComponent('Hei! Download file ini dari NexDrop:\n\n'+url)}`;
+}
+
+// ✅ FIXED: Use real QR library (qrcodejs)
+function showQR() {
+  document.getElementById('qr-modal').classList.add('active');
+  const url = document.getElementById('dl-share-url').value;
+  const container = document.getElementById('qr-container');
+  container.innerHTML = '';
+  try {
+    new QRCode(container, { text: url, width: 200, height: 200, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+  } catch(e) {
+    // Fallback if QRCode lib not loaded
+    container.innerHTML = `<canvas id="qr-canvas" width="200" height="200"></canvas>`;
+    drawQRFallback(url);
+  }
+}
+
+function drawQRFallback(text) {
+  const canvas = document.getElementById('qr-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = 200;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,size,size);
+  ctx.fillStyle='#000';
+  const cells=21, cell=size/cells;
+  function finder(ox,oy){ctx.fillRect(ox*cell,oy*cell,7*cell,7*cell);ctx.fillStyle='#fff';ctx.fillRect((ox+1)*cell,(oy+1)*cell,5*cell,5*cell);ctx.fillStyle='#000';ctx.fillRect((ox+2)*cell,(oy+2)*cell,3*cell,3*cell);}
+  finder(0,0);finder(14,0);finder(0,14);
+  let seed=text.split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+  function rand(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/0xffffffff;}
+  for(let r=0;r<cells;r++){for(let c=0;c<cells;c++){if((r<9&&c<9)||(r<9&&c>12)||(r>12&&c<9))continue;ctx.fillStyle=rand()>.5?'#000':'#fff';ctx.fillRect(c*cell,r*cell,cell-.5,cell-.5);}}
+}
+
+function showEmbedModal() { switchTab('embed', document.querySelectorAll('.tab-btn')[3]); toast('📋 Scroll ke tab Embed di bawah!','info'); }
+function copyEmbedCode(id) { navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => toast('📋 Kode disalin!','success')); }
+
+/* ════════════════════════════════
+   TABS & UI HELPERS
+════════════════════════════════ */
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('tab-'+id)?.classList.add('active');
+}
+
+// ✅ NEW: Password visibility toggle
+function togglePwVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type='text'; btn.textContent='🙈'; }
+  else { input.type='password'; btn.textContent='👁'; }
+}
+
+/* ════════════════════════════════
+   KEYBOARD SHORTCUTS  ✨ NEW
+════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+  }
+  if (e.altKey && e.key === 'h') { e.preventDefault(); goto('home'); }
+  if (e.altKey && e.key === 'd') { e.preventDefault(); goto('dashboard'); }
+  if (e.altKey && e.key === 't') { e.preventDefault(); toggleTheme(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); document.getElementById('file-input').click(); }
+  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); document.getElementById('search-input').focus(); }
+});
+
+function showKeyboardShortcuts() { document.getElementById('shortcuts-modal').classList.add('active'); }
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+function toast(msg, type='info') {
+  const icons = { success:'✅', warning:'⚠️', error:'❌', info:'ℹ️' };
+  const div   = document.createElement('div');
+  div.className = 'toast';
+  div.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('toast-container').appendChild(div);
+  requestAnimationFrame(() => div.classList.add('show'));
+  setTimeout(() => { div.classList.remove('show'); setTimeout(()=>div.remove(),400); }, 5000);
+}
+
+/* ════════════════════════════════
+   UTILITIES
+════════════════════════════════ */
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatSize(bytes) {
+  if (!bytes && bytes !== 0) return '—';
+  if (bytes === 0) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+  return (bytes/1073741824).toFixed(2) + ' GB';
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function formatDateShort(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const sec = diff/1000, min = sec/60, hr = min/60, day = hr/24;
+  if (sec<60)   return 'Baru saja';
+  if (min<60)   return Math.floor(min)+' menit lalu';
+  if (hr<24)    return Math.floor(hr)+' jam lalu';
+  if (day<30)   return Math.floor(day)+' hari lalu';
+  return Math.floor(day/30)+' bulan lalu';
+}
+
+function getIconClass(ext) {
+  const map = {
+    apk:'ft-apk', android:'ft-android',
+    zip:'ft-zip', rar:'ft-rar', '7z':'ft-7z', gz:'ft-zip', tar:'ft-zip',
+    mp4:'ft-mp4', mkv:'ft-mkv', avi:'ft-avi', mov:'ft-mp4', webm:'ft-mp4',
+    mp3:'ft-mp3', wav:'ft-wav', flac:'ft-flac', aac:'ft-mp3', ogg:'ft-mp3',
+    pdf:'ft-pdf',
+    jpg:'ft-jpg', jpeg:'ft-jpeg', png:'ft-png', gif:'ft-gif', webp:'ft-webp', bmp:'ft-png',
+    exe:'ft-exe', msi:'ft-msi',
+    doc:'ft-doc', docx:'ft-docx',
+    xls:'ft-xls', xlsx:'ft-xlsx',
+    ppt:'ft-ppt', pptx:'ft-pptx',
+    txt:'ft-txt', md:'ft-md', json:'ft-txt', xml:'ft-txt', csv:'ft-xlsx',
+    html:'ft-doc', css:'ft-txt', js:'ft-txt', py:'ft-txt',
+    deb:'ft-apk', dmg:'ft-exe',
+  };
+  return map[ext] || 'ft-default';
+}
+</script>
+</body>
+</html>
