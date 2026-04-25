@@ -2223,14 +2223,20 @@ function buildApiMessages(chat, aiIdx, isVision) {
     history = [...first, ...recent];
   }
 
+  // Trim very long messages to prevent token overflow (keep last 8000 chars)
+  const MAX_MSG_CHARS = 8000;
   return history.map(m => {
+    let txt = m.content || '';
+    if (txt.length > MAX_MSG_CHARS) {
+      txt = txt.slice(-MAX_MSG_CHARS);
+    }
     if (m.role === 'user' && m.images && m.images.length > 0 && isVision) {
       const parts = [];
-      if (m.content) parts.push({ type: 'text', text: m.content });
+      if (txt) parts.push({ type: 'text', text: txt });
       m.images.forEach(img => parts.push({ type: 'image_url', image_url: { url: img } }));
       return { role: 'user', content: parts };
     }
-    return { role: m.role, content: m.content || '' };
+    return { role: m.role, content: txt };
   });
 }
 
@@ -2405,17 +2411,24 @@ async function streamAI() {
   }
 
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${S.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': location.href,
-        'X-Title': 'NeuraChat',
-      },
-      body: JSON.stringify(payload),
-      signal: S.controller.signal,
-    });
+    // Combine user AbortController with a 120s timeout
+    const timeoutId = setTimeout(() => S.controller.abort(), 120000);
+    let res;
+    try {
+      res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${S.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': location.href,
+          'X-Title': 'NeuraChat',
+        },
+        body: JSON.stringify(payload),
+        signal: S.controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) {
       let errMsg = `HTTP ${res.status}`;
@@ -2437,40 +2450,54 @@ async function streamAI() {
       if (done) break;
 
       buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop(); // keep incomplete line in buffer
+
+      // FIXED: split on both \r\n and \n — OpenRouter uses \r\n
+      const lines = buf.split(/\r?\n/);
+      buf = lines.pop(); // keep last incomplete line
 
       for (const line of lines) {
         const t = line.trim();
-        if (!t || t === 'data: [DONE]') continue;
+        if (!t) continue;
+        if (t === 'data: [DONE]') break;
         if (!t.startsWith('data: ')) continue;
 
-        try {
-          const data = JSON.parse(t.slice(6));
-          const delta = data.choices?.[0]?.delta;
-          if (!delta) continue;
+        const jsonStr = t.slice(6).trim();
+        if (!jsonStr || jsonStr === '[DONE]') continue;
 
-          // Thinking / reasoning delta
-          if (delta.reasoning) {
-            thinking += delta.reasoning;
+        try {
+          const data = JSON.parse(jsonStr);
+
+          // Validate structure — skip malformed chunks
+          if (!data || typeof data !== 'object') continue;
+          const choice = data.choices?.[0];
+          if (!choice) continue;
+
+          const delta = choice.delta;
+          if (!delta || typeof delta !== 'object') continue;
+
+          // Reasoning/thinking chunk — must be string
+          const reasonChunk = delta.reasoning;
+          if (typeof reasonChunk === 'string' && reasonChunk.length > 0) {
+            thinking += reasonChunk;
             const thinkTextEl = ensureThinkingEl();
             if (thinkTextEl) thinkTextEl.textContent = thinking;
             deferScroll();
           }
 
-          // Content delta — append as plain text (NO markdown parse here)
-          if (delta.content) {
-            content += delta.content;
+          // Content chunk — MUST be string, no other types allowed
+          const contentChunk = delta.content;
+          if (typeof contentChunk === 'string' && contentChunk.length > 0) {
+            content += contentChunk;
             const live = ensureLiveEl();
 
-            // Remove typing dots if still present
+            // Remove typing dots on first real token
             const dots = bubble.querySelector('.typing-dots');
             if (dots) dots.remove();
 
-            // Append text content — no DOM reflow
+            // textContent only = zero reflow = zero scroll jitter
             live.textContent = content;
 
-            // Blink cursor (CSS only, no DOM change)
+            // Blinking cursor (append once, CSS animates it)
             if (!bubble.querySelector('.stream-cursor')) {
               const cur = document.createElement('span');
               cur.className = 'stream-cursor';
@@ -2480,7 +2507,7 @@ async function streamAI() {
             deferScroll();
           }
         } catch(parseErr) {
-          // Silently skip malformed SSE lines
+          // Skip malformed SSE lines silently
         }
       }
     }
