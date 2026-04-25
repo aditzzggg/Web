@@ -1639,6 +1639,28 @@ select.fi { appearance: none; cursor: pointer; }
 
 <script>
 'use strict';
+
+// Global error handler — prevent blank white/black screen on JS crash
+window.addEventListener('error', function(e) {
+  console.error('[NeuraChat] Uncaught error:', e.message, e.filename, e.lineno);
+  const el = document.getElementById('msg-list');
+  if (el && el.children.length === 0) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">' +
+      '<div style="font-size:32px;margin-bottom:12px">⚠️</div>' +
+      '<p>Terjadi error saat memuat. Coba refresh halaman.</p>' +
+      '<p style="font-size:12px;margin-top:8px;opacity:.6">' + (e.message||'Unknown error') + '</p>' +
+      '</div>';
+  }
+}, { passive: true });
+
+window.addEventListener('unhandledrejection', function(e) {
+  // Ignore AbortError — those are normal (user stopped generation)
+  if (e.reason && (e.reason.name === 'AbortError' || String(e.reason.message).includes('Dihentikan'))) {
+    e.preventDefault();
+    return;
+  }
+  console.error('[NeuraChat] Unhandled promise rejection:', e.reason);
+}, { passive: true });
 /* ═══════════════════════════════════════════════════════
    MODEL CATALOGUE
 ═══════════════════════════════════════════════════════ */
@@ -1682,10 +1704,14 @@ const S = {
   chats: {},
   activeChatId: null,
   isGenerating: false,
-  controller: null,
   customModels: [],
   pinnedImages: [],
 };
+
+// AbortController and Reader live OUTSIDE S so they are never serialized/cloned
+// (fixes DataCloneError: AbortSignal object could not be cloned on Android)
+let _controller = null;
+let _reader = null; // stream reader — cancelled directly instead of using AbortSignal
 
 const STORE_KEY = 'neurachat_v3';
 
@@ -1706,7 +1732,11 @@ function load() {
     if (!raw) return;
     const d = JSON.parse(raw);
     if (d.apiKey !== undefined)      S.apiKey = d.apiKey;
-    if (d.model)                     S.model = d.model;
+    if (d.model) {
+      // Only use saved model if it's still in known list or custom list
+      const knownIds = [...MODELS.map(m => m.id), ...(d.customModels || [])];
+      S.model = knownIds.includes(d.model) ? d.model : S.model;
+    }
     if (d.systemPrompt)              S.systemPrompt = d.systemPrompt;
     if (d.temperature !== undefined) S.temperature = d.temperature;
     if (d.maxTokens)                 S.maxTokens = d.maxTokens;
@@ -1714,6 +1744,9 @@ function load() {
     if (d.chats)                     S.chats = d.chats;
     if (d.activeChatId)              S.activeChatId = d.activeChatId;
     if (d.customModels)              S.customModels = d.customModels;
+    // Ensure runtime-only fields always have safe defaults
+    S.pinnedImages = [];
+    S.isGenerating = false;
   } catch(e) { console.warn('load error', e); }
 }
 
@@ -2298,45 +2331,46 @@ async function sendMessage() {
   await streamAI();
 }
 
-// ─── STREAM AI ───────────────────────────────────────────
-// KEY FIX: During streaming, we use textContent (no innerHTML) to
-// avoid layout reflow that causes scroll jitter. Markdown is parsed
-// only once at the very end.
+// ─── STREAM AI ─────────────────────────────────────────────────────
 async function streamAI() {
   const chat = S.chats[S.activeChatId];
   if (!chat) return;
 
   S.isGenerating = true;
-  S.controller = new AbortController();
+
+  // Use a simple object instead of AbortController — NEVER pass AbortSignal to fetch
+  // because Android browsers fail with DataCloneError when trying to clone it internally
+  _controller = { aborted: false };
+
+  // Auto-cancel after 120 s — cancel the reader directly
+  const _timeoutTimer = setTimeout(() => {
+    if (_controller) _controller.aborted = true;
+    if (_reader) { _reader.cancel().catch(() => {}); _reader = null; }
+  }, 120000);
+
   setGenUI(true);
 
+  // ── Add AI placeholder message ────────────────────────────────
   const aiMsgId = uid();
   const aiMsg = { id: aiMsgId, role: 'assistant', content: '', thinking: '' };
   chat.messages.push(aiMsg);
   const aiIdx = chat.messages.length - 1;
 
-  // Append AI bubble
   const msgList = $('msg-list');
   const aiDiv = document.createElement('div');
   aiDiv.innerHTML = renderMsgHTML(aiMsg, aiIdx);
   const aiWrap = aiDiv.firstElementChild;
   msgList.appendChild(aiWrap);
 
-  // Get bubble element and set initial state
   const bubble = aiWrap.querySelector('.msg-bubble');
-  bubble.innerHTML = `<div class="typing-dots">
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
-  </div>`;
-
+  bubble.innerHTML = '<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
   _atBottom = true;
   scrollEnd(true);
 
-  // Build payload
+  // ── Build request payload ─────────────────────────────────────
   const modelObj = MODELS.find(m => m.id === S.model);
-  const isVision = modelObj?.vision || false;
-  const isThinkModel = modelObj?.think || false;
+  const isVision    = !!(modelObj && modelObj.vision);
+  const isThinkModel = !!(modelObj && modelObj.think);
   const apiMessages = buildApiMessages(chat, aiIdx, isVision);
 
   const payload = {
@@ -2350,195 +2384,223 @@ async function streamAI() {
     max_tokens: S.maxTokens,
   };
 
-  // For thinking models add include_reasoning flag
-  if (isThinkModel) {
-    payload.include_reasoning = true;
-  }
+  // ── Live DOM helpers ──────────────────────────────────────────
+  let thinkEl = null;  // <div class="thinking-text">
+  let liveEl  = null;  // plain-text content node
 
-  let content = '';
-  let thinking = '';
-
-  // ─── LIVE DOM ELEMENTS ────────────────────────────
-  // We maintain two separate live elements during streaming:
-  // 1. A thinking div (textContent updates)
-  // 2. A content pre (textContent updates - NO markdown during stream)
-  // This avoids innerHTML reflow and scroll jitter.
-
-  let thinkingEl = null;
-  let liveEl = null;
-
-  function ensureThinkingEl() {
-    if (!thinkingEl) {
+  function getThinkEl() {
+    if (!thinkEl) {
+      // Insert thinking block before any live content
+      const block = document.createElement('div');
+      block.className = 'thinking-block open';
+      block.id = 'think-block-' + aiMsgId;
+      block.innerHTML =
+        '<button class="thinking-toggle" onclick="this.closest(\'.thinking-block\').classList.toggle(\'open\')">' +
+          '<span class="thinking-spin">⟳</span> Proses Berpikir <span class="thinking-chevron">▾</span>' +
+        '</button>' +
+        '<div class="thinking-body"><div class="thinking-text" id="thinktxt-' + aiMsgId + '"></div></div>';
+      // Prepend so thinking is above content
       bubble.innerHTML = '';
-      thinkingEl = document.createElement('div');
-      thinkingEl.className = 'thinking-block open';
-      thinkingEl.innerHTML = `<button class="thinking-toggle" onclick="this.closest('.thinking-block').classList.toggle('open')">
-        <span class="thinking-spin">⟳</span>
-        Proses Berpikir
-        <span class="thinking-chevron">▾</span>
-      </button>
-      <div class="thinking-body">
-        <div class="thinking-text" id="think-live-${aiMsgId}"></div>
-      </div>`;
-      bubble.appendChild(thinkingEl);
+      bubble.appendChild(block);
+      thinkEl = document.getElementById('thinktxt-' + aiMsgId);
     }
-    return document.getElementById(`think-live-${aiMsgId}`);
+    return thinkEl;
   }
 
-  function ensureLiveEl() {
+  function getLiveEl() {
     if (!liveEl) {
-      if (!bubble.querySelector('.stream-live')) {
-        liveEl = document.createElement('div');
-        liveEl.className = 'stream-live';
-        liveEl.style.cssText = 'white-space:pre-wrap;line-height:1.7;font-size:15px';
-        bubble.appendChild(liveEl);
-      } else {
-        liveEl = bubble.querySelector('.stream-live');
-      }
+      liveEl = document.createElement('div');
+      liveEl.className = 'stream-live';
+      liveEl.style.cssText = 'white-space:pre-wrap;line-height:1.7;font-size:15px;word-break:break-word';
+      bubble.appendChild(liveEl);
     }
     return liveEl;
   }
 
-  // Throttled scroll — max once per animation frame
-  let scrollPending = false;
+  // Throttled scroll — one rAF per frame, no spam
+  let _rafPending = false;
   function deferScroll() {
-    if (scrollPending) return;
-    scrollPending = true;
-    requestAnimationFrame(() => {
-      scrollPending = false;
-      scrollEnd();
-    });
+    if (_rafPending) return;
+    _rafPending = true;
+    requestAnimationFrame(() => { _rafPending = false; scrollEnd(); });
   }
 
+  // ── Streaming fetch ───────────────────────────────────────────
+  let content  = '';
+  let thinking = '';
+  let hadError = false;
+
   try {
-    // Combine user AbortController with a 120s timeout
-    const timeoutId = setTimeout(() => S.controller.abort(), 120000);
-    let res;
-    try {
-      res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${S.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': location.href,
-          'X-Title': 'NeuraChat',
-        },
-        body: JSON.stringify(payload),
-        signal: S.controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    // ⚠️ DO NOT add `signal` here — passing AbortSignal to fetch causes
+    // "DataCloneError: AbortSignal object could not be cloned" on Android Chrome/WebView
+    // because the browser tries to postMessage the fetch init internally.
+    // Instead we cancel the reader directly (see stopGeneration / timeout above).
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + S.apiKey,
+        'Content-Type':  'application/json',
+        'HTTP-Referer':  location.href,
+        'X-Title':       'NeuraChat',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    clearTimeout(_timeoutTimer);
 
     if (!res.ok) {
-      let errMsg = `HTTP ${res.status}`;
+      let errMsg = 'HTTP ' + res.status;
       try {
         const j = await res.json();
-        errMsg = j.error?.message || j.error?.code || errMsg;
-      } catch(e) {}
+        errMsg = (j.error && (j.error.message || j.error.code)) || errMsg;
+      } catch(e2) {}
       throw new Error(errMsg);
     }
 
-    if (!res.body) throw new Error('Response body kosong');
+    if (!res.body) throw new Error('Response body kosong — browser tidak mendukung streaming');
 
     const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
+    _reader = reader; // store module-level so stopGeneration can cancel it
+    const dec    = new TextDecoder('utf-8');
+    let buf      = '';
+    let done     = false;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    while (!done) {
+      // Check manual abort flag (set by stopGeneration or timeout)
+      if (_controller && _controller.aborted) {
+        try { await reader.cancel(); } catch(e) {}
+        _reader = null;
+        throw Object.assign(new Error('Dihentikan'), { name: 'AbortError' });
+      }
 
-      buf += dec.decode(value, { stream: true });
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (readErr) {
+        // reader.cancel() was called externally (stop button / timeout)
+        _reader = null;
+        throw Object.assign(new Error('Dihentikan'), { name: 'AbortError' });
+      }
+      done = chunk.done;
+      if (chunk.value) buf += dec.decode(chunk.value, { stream: true });
 
-      // FIXED: split on both \r\n and \n — OpenRouter uses \r\n
+      // Split on 
+ OR 
+ (OpenRouter sometimes sends 
+)
       const lines = buf.split(/\r?\n/);
-      buf = lines.pop(); // keep last incomplete line
+      // Keep the last (potentially incomplete) line in buffer
+      buf = lines.pop();
 
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t) continue;
-        if (t === 'data: [DONE]') break;
-        if (!t.startsWith('data: ')) continue;
+      for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        const t   = raw.trim();
+
+        if (!t) continue;                       // blank line between events
+        if (t === 'data: [DONE]') { done = true; break; }
+        if (!t.startsWith('data: ')) continue;  // comment or event: field
 
         const jsonStr = t.slice(6).trim();
         if (!jsonStr || jsonStr === '[DONE]') continue;
 
-        try {
-          const data = JSON.parse(jsonStr);
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); } catch(e) { continue; }
 
-          // Validate structure — skip malformed chunks
-          if (!data || typeof data !== 'object') continue;
-          const choice = data.choices?.[0];
-          if (!choice) continue;
+        if (!parsed || typeof parsed !== 'object') continue;
 
-          const delta = choice.delta;
-          if (!delta || typeof delta !== 'object') continue;
+        // OpenRouter error object inside stream
+        if (parsed.error) {
+          const eMsg = (parsed.error.message || parsed.error.code || JSON.stringify(parsed.error));
+          throw new Error('Provider: ' + eMsg);
+        }
 
-          // Reasoning/thinking chunk — must be string
-          const reasonChunk = delta.reasoning;
-          if (typeof reasonChunk === 'string' && reasonChunk.length > 0) {
-            thinking += reasonChunk;
-            const thinkTextEl = ensureThinkingEl();
-            if (thinkTextEl) thinkTextEl.textContent = thinking;
-            deferScroll();
+        const choice = Array.isArray(parsed.choices) ? parsed.choices[0] : null;
+        if (!choice) continue;
+
+        const delta = choice.delta;
+        if (!delta || typeof delta !== 'object') continue;
+
+        // ── Reasoning / thinking token ──
+        const rChunk = delta.reasoning;
+        if (typeof rChunk === 'string' && rChunk.length > 0) {
+          thinking += rChunk;
+          const te = getThinkEl();
+          // Show last 4000 chars max to avoid massive DOM during streaming
+          if (te) te.textContent = thinking.length > 4000
+            ? '...(dipotong)...\n' + thinking.slice(-4000)
+            : thinking;
+          deferScroll();
+        }
+
+        // ── Handle <think>...</think> tags in content (some models use this) ──
+        const cChunkRaw = delta.content;
+        if (typeof cChunkRaw === 'string' && cChunkRaw.length > 0) {
+          // Strip <think> tags if they appear in content stream
+          const stripped = cChunkRaw.replace(/<\/?think>/gi, '');
+          if (stripped.length > 0) {
+            content += stripped;
+
+          // Remove thinking dots on first real content token
+          const dots = bubble.querySelector('.typing-dots');
+          if (dots) dots.remove();
+
+          // Direct textContent = no innerHTML = no reflow = no scroll jitter
+          const le = getLiveEl();
+          le.textContent = content;
+
+          // Blinking cursor (created once, removed at finalize)
+          if (!bubble.querySelector('.stream-cursor')) {
+            const cur = document.createElement('span');
+            cur.className = 'stream-cursor';
+            bubble.appendChild(cur);
           }
 
-          // Content chunk — MUST be string, no other types allowed
-          const contentChunk = delta.content;
-          if (typeof contentChunk === 'string' && contentChunk.length > 0) {
-            content += contentChunk;
-            const live = ensureLiveEl();
+          deferScroll();
+          } // end stripped.length > 0
+        } // end cChunkRaw
 
-            // Remove typing dots on first real token
-            const dots = bubble.querySelector('.typing-dots');
-            if (dots) dots.remove();
-
-            // textContent only = zero reflow = zero scroll jitter
-            live.textContent = content;
-
-            // Blinking cursor (append once, CSS animates it)
-            if (!bubble.querySelector('.stream-cursor')) {
-              const cur = document.createElement('span');
-              cur.className = 'stream-cursor';
-              bubble.appendChild(cur);
-            }
-
-            deferScroll();
-          }
-        } catch(parseErr) {
-          // Skip malformed SSE lines silently
+        // Stop if finish_reason signals end
+        if (choice.finish_reason && choice.finish_reason !== 'null' &&
+            choice.finish_reason !== null) {
+          // might still have delta above; just note it
         }
       }
     }
 
   } catch(err) {
-    if (err.name === 'AbortError') {
-      // User stopped — keep whatever content we got
+    clearTimeout(_timeoutTimer);
+    if (err.name === 'AbortError' || String(err.message).includes('Dihentikan') || String(err.message).includes('abort')) {
       content = content || '*(Dihentikan)*';
     } else {
-      console.error('Stream error:', err);
-      content = `⚠️ **Error:** ${err.message}\n\n**Kemungkinan penyebab:**\n- API Key salah atau kadaluarsa\n- Model yang dipilih tidak tersedia\n- Koneksi internet bermasalah\n- Pertanyaan terlalu panjang untuk model ini\n\n_Coba ganti model, periksa API Key, atau kurangi panjang konteks._`;
-      showToast('Error: ' + err.message, 'err');
+      hadError = true;
+      console.error('[NeuraChat] stream error:', err.message);
+      content = '⚠️ **Error:** ' + err.message + '\n\n' +
+        '**Kemungkinan penyebab:**\n' +
+        '- API Key salah atau kadaluarsa\n' +
+        '- Model yang dipilih tidak tersedia atau overloaded\n' +
+        '- Koneksi internet bermasalah\n' +
+        '- Konteks terlalu panjang untuk model ini\n\n' +
+        '_Coba: ganti model, refresh halaman, atau periksa API Key di Pengaturan._';
+      showToast(err.message, 'err');
     }
+  } finally {
+    clearTimeout(_timeoutTimer);
+    _controller = null;
+    _reader = null;
   }
 
-  // ─── FINALIZE ─────────────────────────────────────
-  // Save to state
-  aiMsg.content = content || '*(Tidak ada respons)*';
-  if (thinking) aiMsg.thinking = thinking;
+  // ── Finalize: render markdown once ───────────────────────────
+  aiMsg.content  = content  || '*(Tidak ada respons)*';
+  aiMsg.thinking = thinking || '';
   chat.messages[aiIdx] = aiMsg;
   save();
 
-  // Replace live bubble with fully-rendered markdown (only happens once)
-  const finalWrap = document.getElementById(`msg-${aiMsgId}`);
+  const finalWrap = document.getElementById('msg-' + aiMsgId);
   if (finalWrap) {
-    const newHtml = renderMsgHTML(aiMsg, aiIdx);
     const tmp = document.createElement('div');
-    tmp.innerHTML = newHtml;
+    tmp.innerHTML = renderMsgHTML(aiMsg, aiIdx);
     const newEl = tmp.firstElementChild;
     finalWrap.replaceWith(newEl);
-    // Highlight code blocks in the final render
     newEl.querySelectorAll('pre code').forEach(b => {
       try { hljs.highlightElement(b); } catch(e) {}
     });
@@ -2551,10 +2613,14 @@ async function streamAI() {
 }
 
 function stopGeneration() {
-  if (S.controller) {
-    S.controller.abort();
-    S.controller = null;
+  // Signal the read loop to stop
+  if (_controller) _controller.aborted = true;
+  // Cancel the stream reader directly (avoids needing AbortSignal on fetch)
+  if (_reader) {
+    _reader.cancel().catch(() => {});
+    _reader = null;
   }
+  _controller = null;
 }
 
 function setGenUI(gen) {
